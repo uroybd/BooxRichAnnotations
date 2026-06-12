@@ -1,0 +1,146 @@
+# Boox Rich Annotation
+
+A native Android app for extracting and exporting rich annotations from Onyx Boox e-readers.
+
+## Features
+
+- 📚 **Browse Your Library** - View all your ebooks (EPUB, MOBI, AZW/AZW3) in one place
+- 🔍 **Search** - Find books instantly by title or author
+- 🎨 **Rich Annotations** - Exports annotations with colors, styles, and notes
+- 📥 **JSON Export** - Download annotations in a structured JSON format
+- 🔄 **Real-time Refresh** - Fetch latest data on demand
+- ⚡ **E-ink Optimized** - Pure black & white theme with zero animations for optimal e-ink display
+- 🎯 **No Duplicates** - Automatically deduplicates edited annotations
+
+## Supported Annotation Styles
+
+- Highlight (filled)
+- Underline (straight)
+- Dashed underline
+- Wavy underline
+- Redact
+- Mute
+
+## JSON Export Format
+
+```json
+{
+  "title": "Book Title",
+  "authors": "Author Name",
+  "format": "epub",
+  "annotations": [
+    {
+      "quote": "Selected text...",
+      "pageNumber": 42,
+      "chapter": "Chapter Name",
+      "createdAt": 1781261518476,
+      "color": "#a020f0",
+      "style": "highlight",
+      "note": "Optional note text"
+    }
+  ]
+}
+```
+
+## Installation
+
+### Requirements
+- Android 7.0 (API 24) or higher
+- Onyx Boox device with kreader app installed
+
+### Install from APK
+1. Download the latest APK from the [Releases](../../releases) page
+2. Enable "Install from Unknown Sources" in your device settings
+3. Install the APK
+4. Open the app and grant necessary permissions
+
+### Build from Source
+```bash
+git clone https://github.com/yourusername/BooxRichAnnotation.git
+cd BooxRichAnnotation
+./gradlew assembleDebug
+```
+
+The APK will be available at: `app/build/outputs/apk/debug/app-debug.apk`
+
+## How It Works
+
+The app queries Onyx's internal content provider to access:
+- **Metadata** - Book information (title, author, format, etc.)
+- **Annotations** - Highlights, notes, and their metadata
+
+No file parsing or external storage access needed - everything is fetched directly from the Onyx system database.
+
+## Technical Details
+
+### Content Providers
+- Authority: `com.onyx.content.database.ContentProvider`
+- Tables: `Metadata`, `Annotation`
+- Requires Android 11+ package visibility declaration
+
+### Deduplication Logic
+When you edit an annotation (change color, add notes, etc.), Onyx creates a new entry. The app automatically:
+1. Groups annotations by their unique identifier (quote + location)
+2. Keeps only the most recent version (highest `updatedAt` timestamp)
+3. Ensures you see the current state of each annotation
+
+### E-ink Optimizations
+- All animations disabled
+- Pure white (#FFFFFF) background
+- Pure black (#000000) text and borders
+- 2dp bold outlines on all UI elements
+- Zero elevation/shadows
+
+## Project Structure
+
+```
+app/src/main/
+├── java/.../booxrichannotation/
+│   ├── MainActivity.kt              # Book list screen
+│   ├── BookDetailActivity.kt        # Annotation detail screen
+│   ├── BookAdapter.kt               # RecyclerView adapter
+│   ├── OnyxContentProvider.kt       # Content provider helper
+│   ├── BookMetadata.kt              # Book data model
+│   └── Annotation.kt                # Annotation data model
+└── res/
+    ├── layout/                      # UI layouts
+    ├── menu/                        # Toolbar menus
+    ├── drawable/                    # Backgrounds, icons
+    └── values/                      # Themes, strings, colors
+```
+
+## Permissions
+
+- **QUERY_ALL_PACKAGES** - Required on Android 11+ to access Onyx content provider
+- **WRITE_EXTERNAL_STORAGE** - Only on Android 9 and below for file downloads
+
+## Compatibility
+
+Tested on:
+- Onyx Boox Tab Mini C (Android 11)
+- Other Onyx Boox devices should work if they use the kreader app
+
+## Known Limitations
+
+- Only works on Onyx Boox devices (uses proprietary content provider)
+- Requires the official Onyx kreader app to be installed
+- Cannot modify or delete annotations (read-only access)
+
+## License
+
+MIT License - see [LICENSE](LICENSE) file for details
+
+## Acknowledgments
+
+- Inspired by the Python-based [onyxexpo](../onyxexpo) project
+- Built with Material Design 3 components
+- Uses Kotlin Coroutines for async operations
+
+## Contributing
+
+Contributions are welcome! Please feel free to submit a Pull Request.
+
+## Support
+
+If you encounter any issues or have suggestions, please open an issue on GitHub.
+
