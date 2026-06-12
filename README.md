@@ -137,12 +137,6 @@ Tested on:
 
 MIT License - see [LICENSE](LICENSE) file for details
 
-## Acknowledgments
-
-- Inspired by the Python-based [onyxexpo](../onyxexpo) project
-- Built with Material Design 3 components
-- Uses Kotlin Coroutines for async operations
-
 ## Contributing
 
 Contributions are welcome! Please feel free to submit a Pull Request.
