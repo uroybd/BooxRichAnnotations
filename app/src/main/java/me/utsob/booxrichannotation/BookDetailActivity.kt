@@ -124,9 +124,14 @@ class BookDetailActivity : AppCompatActivity() {
         lifecycleScope.launch {
             val result = withContext(Dispatchers.IO) {
                 try {
+                    // Sort annotations by page number first, then by creation time
+                    val sortedAnnotations = annotations.sortedWith(
+                        compareBy({ it.pageNumber }, { it.createdAt })
+                    )
+                    
                     // Build annotations array
                     val annotationsArray = JSONArray()
-                    annotations.forEach { annotation ->
+                    sortedAnnotations.forEach { annotation ->
                         val entry = JSONObject().apply {
                             // Add the quote text
                             annotation.quote?.let { put("quote", it) }
