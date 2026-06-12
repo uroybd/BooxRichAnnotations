@@ -1,0 +1,63 @@
+package me.utsob.booxrichannotation
+
+data class Annotation(
+    val rowNumber: Int,
+    val quote: String? = null,
+    val locationBegin: String? = null,
+    val locationEnd: String? = null,
+    val locationBeginInt: Int? = null,
+    val locationEndInt: Int? = null,
+    val note: String? = null,
+    val linkNote: String? = null,
+    val application: String? = null,
+    val position: String? = null,
+    val pageNumber: Int? = null,
+    val rectangles: String? = null,
+    val color: Int? = null,
+    val shape: Int? = null,
+    val chapter: String? = null,
+    val uuid: String? = null,
+    val objId: String? = null,
+    val status: Int? = null,
+    val pageXpath: String? = null,
+    val startXpath: String? = null,
+    val endXpath: String? = null,
+    val customAttr: String? = null,
+    val id: Int? = null,
+    val guid: String? = null,
+    val idString: String? = null,
+    val createdAt: Long? = null,
+    val updatedAt: Long? = null
+) {
+    fun toMap(): Map<String, Any?> {
+        return mapOf(
+            "rowNumber" to rowNumber,
+            "quote" to quote,
+            "locationBegin" to locationBegin,
+            "locationEnd" to locationEnd,
+            "locationBeginInt" to locationBeginInt,
+            "locationEndInt" to locationEndInt,
+            "note" to note,
+            "linkNote" to linkNote,
+            "application" to application,
+            "position" to position,
+            "pageNumber" to pageNumber,
+            "rectangles" to rectangles,
+            "color" to color,
+            "shape" to shape,
+            "chapter" to chapter,
+            "uuid" to uuid,
+            "objId" to objId,
+            "status" to status,
+            "pageXpath" to pageXpath,
+            "startXpath" to startXpath,
+            "endXpath" to endXpath,
+            "customAttr" to customAttr,
+            "id" to id,
+            "guid" to guid,
+            "idString" to idString,
+            "createdAt" to createdAt,
+            "updatedAt" to updatedAt
+        ).filterValues { it != null }
+    }
+}
