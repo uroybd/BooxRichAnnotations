@@ -53,7 +53,7 @@ A native Android app for extracting and exporting rich annotations from Onyx Boo
 
 ### Requirements
 - Android 7.0 (API 24) or higher
-- Onyx Boox device with kreader app installed
+- Onyx Boox device with NeoReader app installed
 
 ### Install from APK
 1. Download the latest APK from the [Releases](../../releases) page
@@ -125,12 +125,12 @@ app/src/main/
 
 Tested on:
 - Onyx Boox Tab Mini C (Android 11)
-- Other Onyx Boox devices should work if they use the kreader app
+- Other Onyx Boox devices should work if they use the NeoReader app
 
 ## Known Limitations
 
 - Only works on Onyx Boox devices (uses proprietary content provider)
-- Requires the official Onyx kreader app to be installed
+- Requires the official Onyx NeoReader app to be installed
 - Cannot modify or delete annotations (read-only access)
 
 ## License
