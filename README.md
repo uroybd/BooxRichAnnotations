@@ -2,6 +2,13 @@
 
 A native Android app for extracting and exporting rich annotations from Onyx Boox e-readers.
 
+## Screenshots
+
+<p align="center">
+  <img src="screenshots/main_page.png" width="400" alt="Main Page - Book List">
+  <img src="screenshots/download_page.png" width="400" alt="Download Page - Annotations">
+</p>
+
 ## Features
 
 - 📚 **Browse Your Library** - View all your ebooks (EPUB, MOBI, AZW/AZW3) in one place
