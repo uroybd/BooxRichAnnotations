@@ -173,28 +173,6 @@ object OnyxContentProvider {
                         )
                         
                         annotations.add(annotation)
-                        
-                        // Log all fields for the first 3 annotations to identify varying fields
-                        if (annotations.size <= 3) {
-                            Log.d(TAG, "Annotation #${annotations.size}:")
-                            Log.d(TAG, "  quote: ${annotation.quote?.take(50)}...")
-                            Log.d(TAG, "  pageNumber: ${annotation.pageNumber}")
-                            Log.d(TAG, "  chapter: ${annotation.chapter}")
-                            Log.d(TAG, "  color: ${annotation.color}")
-                            Log.d(TAG, "  shape: ${annotation.shape}")
-                            Log.d(TAG, "  status: ${annotation.status}")
-                            Log.d(TAG, "  locationBegin: ${annotation.locationBegin}")
-                            Log.d(TAG, "  locationEnd: ${annotation.locationEnd}")
-                            Log.d(TAG, "  locationBeginInt: ${annotation.locationBeginInt}")
-                            Log.d(TAG, "  locationEndInt: ${annotation.locationEndInt}")
-                            Log.d(TAG, "  position: ${annotation.position}")
-                            Log.d(TAG, "  rectangles: ${annotation.rectangles?.take(100)}")
-                            Log.d(TAG, "  pageXpath: ${annotation.pageXpath}")
-                            Log.d(TAG, "  startXpath: ${annotation.startXpath}")
-                            Log.d(TAG, "  endXpath: ${annotation.endXpath}")
-                            Log.d(TAG, "  customAttr: ${annotation.customAttr}")
-                            Log.d(TAG, "  note: ${annotation.note}")
-                        }
                     } catch (e: Exception) {
                         Log.e(TAG, "Error parsing annotation row", e)
                     }
@@ -216,15 +194,6 @@ object OnyxContentProvider {
                 
                 Log.d(TAG, "After deduplication: ${deduplicatedAnnotations.size} annotations (removed ${annotations.size - deduplicatedAnnotations.size} duplicates)")
                 
-                // Sort by pageNumber, then by createdAt, and log shape values
-                val sortedAnnotations = deduplicatedAnnotations.sortedWith(compareBy({ it.pageNumber }, { it.createdAt }))
-                Log.d(TAG, "=== Annotations sorted by pageNumber then createdAt ===")
-                sortedAnnotations.forEachIndexed { index, ann ->
-                    Log.d(TAG, "#${index + 1}: page=${ann.pageNumber}, createdAt=${ann.createdAt}, shape=${ann.shape}, quote=${ann.quote?.take(50)}...")
-                }
-                Log.d(TAG, "===========================================")
-                
-                // Return deduplicated list instead of original
                 return deduplicatedAnnotations
                 Log.e(TAG, "Annotation query returned null cursor")
             }

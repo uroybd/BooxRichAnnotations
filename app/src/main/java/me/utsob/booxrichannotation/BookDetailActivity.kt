@@ -124,9 +124,9 @@ class BookDetailActivity : AppCompatActivity() {
         lifecycleScope.launch {
             val result = withContext(Dispatchers.IO) {
                 try {
-                    // Sort annotations by page number first, then by creation time
+                    // Sort annotations by page number first, then by location in document
                     val sortedAnnotations = annotations.sortedWith(
-                        compareBy({ it.pageNumber }, { it.createdAt })
+                        compareBy({ it.pageNumber }, { it.locationBeginInt })
                     )
                     
                     // Build annotations array
