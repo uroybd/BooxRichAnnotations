@@ -1,5 +1,7 @@
 package me.utsob.booxrichannotation
 
+import android.app.AlertDialog
+import android.content.Context
 import android.os.Bundle
 import android.view.Menu
 import android.view.MenuItem
@@ -26,11 +28,28 @@ class MainActivity : AppCompatActivity() {
     private lateinit var searchView: SearchView
     private lateinit var toolbar: MaterialToolbar
     
-    private var allBooks: List<BookMetadata> = emptyList()
-    private var filteredBooks: List<BookMetadata> = emptyList()
+    private var allBooksWithAnnotations: List<BookWithAnnotations> = emptyList()
+    private var filteredBooksWithAnnotations: List<BookWithAnnotations> = emptyList()
+    
+    // Sorting preference
+    private enum class SortMode {
+        LAST_READ, ALPHABETICAL
+    }
+    private var currentSortMode = SortMode.LAST_READ
+    
+    companion object {
+        private const val PREFS_NAME = "BooxRichAnnotationPrefs"
+        private const val KEY_SORT_MODE = "sort_mode"
+    }
     
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        
+        // Load saved sort preference
+        val prefs = getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
+        currentSortMode = SortMode.valueOf(
+            prefs.getString(KEY_SORT_MODE, SortMode.LAST_READ.name) ?: SortMode.LAST_READ.name
+        )
         
         // Disable animations for e-ink
         window.setWindowAnimations(0)
@@ -61,19 +80,57 @@ class MainActivity : AppCompatActivity() {
     
     override fun onCreateOptionsMenu(menu: Menu): Boolean {
         menuInflater.inflate(R.menu.menu_main, menu)
-        // Ensure refresh icon is black
-        menu.findItem(R.id.action_refresh)?.icon?.setTint(android.graphics.Color.BLACK)
         return true
     }
     
     override fun onOptionsItemSelected(item: MenuItem): Boolean {
         return when (item.itemId) {
+            R.id.action_sort -> {
+                showSortMenu(item)
+                true
+            }
             R.id.action_refresh -> {
                 loadBooks()
                 true
             }
             else -> super.onOptionsItemSelected(item)
         }
+    }
+    
+    private fun showSortMenu(menuItem: MenuItem) {
+        val popup = android.widget.PopupMenu(this, toolbar.findViewById(R.id.action_sort))
+        popup.menuInflater.inflate(R.menu.menu_sort, popup.menu)
+        
+        // Check current sort mode
+        when (currentSortMode) {
+            SortMode.LAST_READ -> popup.menu.findItem(R.id.sort_last_read)?.isChecked = true
+            SortMode.ALPHABETICAL -> popup.menu.findItem(R.id.sort_alphabetical)?.isChecked = true
+        }
+        
+        popup.setOnMenuItemClickListener { item ->
+            val newSortMode = when (item.itemId) {
+                R.id.sort_last_read -> SortMode.LAST_READ
+                R.id.sort_alphabetical -> SortMode.ALPHABETICAL
+                else -> return@setOnMenuItemClickListener false
+            }
+            
+            if (newSortMode != currentSortMode) {
+                currentSortMode = newSortMode
+                item.isChecked = true
+                
+                // Save preference
+                getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
+                    .edit()
+                    .putString(KEY_SORT_MODE, currentSortMode.name)
+                    .apply()
+                
+                // Resort and update display
+                sortAndFilterBooks()
+            }
+            true
+        }
+        
+        popup.show()
     }
     
     private fun setupSearch() {
@@ -104,12 +161,12 @@ class MainActivity : AppCompatActivity() {
     private fun filterBooks(query: String) {
         val searchQuery = query.trim().lowercase()
         
-        filteredBooks = if (searchQuery.isEmpty()) {
-            allBooks
+        filteredBooksWithAnnotations = if (searchQuery.isEmpty()) {
+            allBooksWithAnnotations
         } else {
-            allBooks.filter { book ->
-                val title = book.getDisplayTitle().lowercase()
-                val author = book.getDisplayAuthors().lowercase()
+            allBooksWithAnnotations.filter { bookWithAnnotations ->
+                val title = bookWithAnnotations.book.getDisplayTitle().lowercase()
+                val author = bookWithAnnotations.book.getDisplayAuthors().lowercase()
                 title.contains(searchQuery) || author.contains(searchQuery)
             }
         }
@@ -117,19 +174,48 @@ class MainActivity : AppCompatActivity() {
         updateRecyclerView()
     }
     
+    private fun sortAndFilterBooks() {
+        android.util.Log.d("MainActivity", "sortAndFilterBooks: currentSortMode=$currentSortMode, allBooksWithAnnotations.size=${allBooksWithAnnotations.size}")
+        
+        // Sort all books first
+        allBooksWithAnnotations = when (currentSortMode) {
+            SortMode.LAST_READ -> {
+                android.util.Log.d("MainActivity", "Sorting by LAST_READ")
+                // Sort by lastAccess descending (most recent first), null values last
+                allBooksWithAnnotations.sortedWith(
+                    compareByDescending<BookWithAnnotations> { it.book.lastAccess != null }
+                        .thenByDescending { it.book.lastAccess ?: 0 }
+                )
+            }
+            SortMode.ALPHABETICAL -> {
+                android.util.Log.d("MainActivity", "Sorting by ALPHABETICAL")
+                // Sort alphabetically by display title
+                allBooksWithAnnotations.sortedBy { it.book.getDisplayTitle().lowercase() }
+            }
+        }
+        
+        android.util.Log.d("MainActivity", "After sorting, first 3 books:")
+        allBooksWithAnnotations.take(3).forEachIndexed { i, bookWithAnnotations ->
+            android.util.Log.d("MainActivity", "  #$i: ${bookWithAnnotations.book.getDisplayTitle()}")
+        }
+        
+        // Reapply current search filter
+        filterBooks(searchView.query.toString())
+    }
+    
     private fun updateRecyclerView() {
-        if (filteredBooks.isEmpty()) {
+        if (filteredBooksWithAnnotations.isEmpty()) {
             recyclerView.visibility = View.GONE
             emptyText.visibility = View.VISIBLE
             emptyText.text = if (searchView.query.isEmpty()) {
-                "No ebooks found (epub, mobi, azw/azw3)"
+                "No books with annotations found"
             } else {
                 "No books found matching \"${searchView.query}\""
             }
         } else {
             recyclerView.visibility = View.VISIBLE
             emptyText.visibility = View.GONE
-            recyclerView.adapter = BookAdapter(filteredBooks)
+            recyclerView.adapter = BookAdapter(filteredBooksWithAnnotations, lifecycleScope)
         }
     }
     
@@ -139,8 +225,10 @@ class MainActivity : AppCompatActivity() {
         emptyText.visibility = View.GONE
         
         lifecycleScope.launch {
-            val books = withContext(Dispatchers.IO) {
-                OnyxContentProvider.queryBookMetadata(this@MainActivity)
+            val (books, allAnnotations) = withContext(Dispatchers.IO) {
+                val books = OnyxContentProvider.queryBookMetadata(this@MainActivity)
+                val annotations = OnyxContentProvider.queryAllAnnotations(this@MainActivity)
+                Pair(books, annotations)
             }
             
             // Filter for ebook formats (epub, mobi, azw, azw3)
@@ -156,17 +244,37 @@ class MainActivity : AppCompatActivity() {
             val uniqueBooks = ebookBooks.groupBy { it.idString }
                 .map { (_, booksWithSameFile) ->
                     val firstBook = booksWithSameFile.first()
-                    // Collect all UUIDs for this file
+                    // Collect all UUIDs for this file and keep the most recent lastAccess time
                     val allUuids = booksWithSameFile.map { it.uuid }
-                    firstBook.copy(allUuids = allUuids)
+                    val latestAccessTime = booksWithSameFile.mapNotNull { it.lastAccess }.maxOrNull()
+                    firstBook.copy(allUuids = allUuids, lastAccess = latestAccessTime)
                 }
             
-            // Sort alphabetically by display title
-            allBooks = uniqueBooks.sortedBy { it.getDisplayTitle().lowercase() }
-            filteredBooks = allBooks
+            // Map annotations to books by idString
+            val annotationsByIdString = allAnnotations.groupBy { it.idString }
+            
+            // Create BookWithAnnotations list and filter to only books with annotations
+            allBooksWithAnnotations = uniqueBooks.mapNotNull { book ->
+                // Find annotations that match any of this book's UUIDs
+                val bookAnnotations = book.allUuids.flatMap { uuid ->
+                    annotationsByIdString[uuid] ?: emptyList()
+                }.distinctBy { "${it.quote?.take(100)}_${it.locationBeginInt}_${it.locationEndInt}" }
+                
+                // Only include books with at least 1 annotation
+                if (bookAnnotations.isNotEmpty()) {
+                    BookWithAnnotations(book, bookAnnotations)
+                } else {
+                    null
+                }
+            }
+            
+            android.util.Log.d("MainActivity", "Loaded ${allBooksWithAnnotations.size} books with annotations (filtered out books with 0 annotations)")
+            android.util.Log.d("MainActivity", "Total annotations across all books: ${allBooksWithAnnotations.sumOf { it.annotationCount }}")
+            
+            // Apply sorting based on current mode
+            sortAndFilterBooks()
             
             progressBar.visibility = View.GONE
-            updateRecyclerView()
         }
     }
 }

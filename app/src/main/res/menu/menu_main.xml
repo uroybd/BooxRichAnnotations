@@ -2,10 +2,13 @@
 <menu xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto">
     <item
+        android:id="@+id/action_sort"
+        android:icon="@drawable/ic_sort"
+        android:title="Sort"
+        app:showAsAction="always" />
+    <item
         android:id="@+id/action_refresh"
-        android:icon="@android:drawable/ic_popup_sync"
+        android:icon="@drawable/ic_refresh"
         android:title="Refresh"
-        android:iconTint="#000000"
-        app:iconTint="#000000"
         app:showAsAction="always" />
 </menu>

@@ -27,7 +27,7 @@ object OnyxContentProvider {
                 
                 // Log all column names for debugging
                 val columnNames = cursor.columnNames
-                Log.d(TAG, "Available columns: ${columnNames.joinToString(", ")}")
+                Log.d(TAG, "Available columns (${columnNames.size}): ${columnNames.joinToString(", ")}")
                 
                 var successCount = 0
                 var errorCount = 0
@@ -46,6 +46,20 @@ object OnyxContentProvider {
                             }
                         }
                         
+                        // Helper function to safely get long value
+                        fun getLongOrNull(columnName: String): Long? {
+                            val index = cursor.getColumnIndex(columnName)
+                            return if (index >= 0) {
+                                try {
+                                    cursor.getLong(index)
+                                } catch (e: Exception) {
+                                    null
+                                }
+                            } else {
+                                null
+                            }
+                        }
+                        
                         val uuid = getStringOrNull("uuid") ?: continue
                         
                         val book = BookMetadata(
@@ -58,7 +72,8 @@ object OnyxContentProvider {
                             isbn = getStringOrNull("ISBN"),
                             description = getStringOrNull("description"),
                             location = getStringOrNull("location"),
-                            idString = getStringOrNull("idString")
+                            idString = getStringOrNull("idString"),
+                            lastAccess = getLongOrNull("lastAccess")
                         )
                         
                         books.add(book)
@@ -195,10 +210,111 @@ object OnyxContentProvider {
                 Log.d(TAG, "After deduplication: ${deduplicatedAnnotations.size} annotations (removed ${annotations.size - deduplicatedAnnotations.size} duplicates)")
                 
                 return deduplicatedAnnotations
+            } ?: run {
                 Log.e(TAG, "Annotation query returned null cursor")
             }
         } catch (e: Exception) {
             Log.e(TAG, "Error querying annotations", e)
+        }
+        
+        return annotations
+    }
+    
+    fun queryAllAnnotations(context: Context): List<Annotation> {
+        val annotations = mutableListOf<Annotation>()
+        val uri = Uri.parse(ANNOTATION_URI)
+        
+        Log.d(TAG, "Querying ALL annotations from content provider...")
+        
+        try {
+            context.contentResolver.query(
+                uri,
+                null,
+                null,
+                null,
+                null
+            )?.use { cursor ->
+                Log.d(TAG, "Found ${cursor.count} total annotations")
+                
+                while (cursor.moveToNext()) {
+                    try {
+                        fun getStringOrNull(columnName: String): String? {
+                            val index = cursor.getColumnIndex(columnName)
+                            return if (index >= 0) {
+                                val value = cursor.getString(index)
+                                if (value.isNullOrBlank() || value == "NULL") null else value
+                            } else null
+                        }
+                        
+                        fun getIntOrNull(columnName: String): Int? {
+                            val index = cursor.getColumnIndex(columnName)
+                            return if (index >= 0) {
+                                try { cursor.getInt(index) } catch (e: Exception) { null }
+                            } else null
+                        }
+                        
+                        fun getLongOrNull(columnName: String): Long? {
+                            val index = cursor.getColumnIndex(columnName)
+                            return if (index >= 0) {
+                                try { cursor.getLong(index) } catch (e: Exception) { null }
+                            } else null
+                        }
+                        
+                        val annotation = Annotation(
+                            rowNumber = cursor.position,
+                            quote = getStringOrNull("quote"),
+                            locationBegin = getStringOrNull("locationBegin"),
+                            locationEnd = getStringOrNull("locationEnd"),
+                            locationBeginInt = getIntOrNull("locationBeginInt"),
+                            locationEndInt = getIntOrNull("locationEndInt"),
+                            note = getStringOrNull("note"),
+                            linkNote = getStringOrNull("linkNote"),
+                            application = getStringOrNull("application"),
+                            position = getStringOrNull("position"),
+                            pageNumber = getIntOrNull("pageNumber"),
+                            rectangles = getStringOrNull("rectangles"),
+                            color = getIntOrNull("color"),
+                            shape = getIntOrNull("shape"),
+                            chapter = getStringOrNull("chapter"),
+                            uuid = getStringOrNull("uuid"),
+                            objId = getStringOrNull("objId"),
+                            status = getIntOrNull("status"),
+                            pageXpath = getStringOrNull("pageXpath"),
+                            startXpath = getStringOrNull("startXpath"),
+                            endXpath = getStringOrNull("endXpath"),
+                            customAttr = getStringOrNull("customAttr"),
+                            id = getIntOrNull("id"),
+                            guid = getStringOrNull("guid"),
+                            idString = getStringOrNull("idString"),
+                            createdAt = getLongOrNull("createdAt"),
+                            updatedAt = getLongOrNull("updatedAt")
+                        )
+                        
+                        annotations.add(annotation)
+                    } catch (e: Exception) {
+                        Log.e(TAG, "Error parsing annotation row #${cursor.position}", e)
+                    }
+                }
+                
+                // Deduplicate annotations using composite key
+                val deduplicatedAnnotations = annotations
+                    .groupBy {
+                        val quoteKey = it.quote?.take(100) ?: ""
+                        val locBegin = it.locationBeginInt ?: 0
+                        val locEnd = it.locationEndInt ?: 0
+                        "${quoteKey}_${locBegin}_${locEnd}"
+                    }
+                    .mapNotNull { (key, annotationsWithSameKey) ->
+                        annotationsWithSameKey.maxByOrNull { it.updatedAt ?: 0L }
+                    }
+                
+                Log.d(TAG, "After deduplication: ${deduplicatedAnnotations.size} annotations (removed ${annotations.size - deduplicatedAnnotations.size} duplicates)")
+                return deduplicatedAnnotations
+            } ?: run {
+                Log.e(TAG, "Query returned null cursor")
+            }
+        } catch (e: Exception) {
+            Log.e(TAG, "Error querying all annotations", e)
         }
         
         return annotations

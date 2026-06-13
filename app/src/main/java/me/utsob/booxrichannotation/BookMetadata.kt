@@ -11,6 +11,7 @@ data class BookMetadata(
     val description: String? = null,
     val location: String? = null,
     val idString: String? = null,
+    val lastAccess: Long? = null,
     val allUuids: List<String> = listOf(uuid) // Track all UUIDs for this file
 ) {
     fun getDisplayTitle(): String {

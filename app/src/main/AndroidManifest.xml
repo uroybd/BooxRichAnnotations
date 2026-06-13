@@ -35,10 +35,16 @@
             </intent-filter>
         </activity>
         
-        <activity
-            android:name=".BookDetailActivity"
+        <!-- FileProvider for sharing annotations -->
+        <provider
+            android:name="androidx.core.content.FileProvider"
+            android:authorities="${applicationId}.fileprovider"
             android:exported="false"
-            android:parentActivityName=".MainActivity" />
+            android:grantUriPermissions="true">
+            <meta-data
+                android:name="android.support.FILE_PROVIDER_PATHS"
+                android:resource="@xml/fileprovider_paths" />
+        </provider>
         
     </application>
 
