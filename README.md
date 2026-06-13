@@ -6,7 +6,6 @@ A native Android app for extracting and exporting rich annotations from Onyx Boo
 
 <p align="center">
   <img src="screenshots/main_page.png" width="400" alt="Main Page - Book List">
-  <img src="screenshots/download_page.png" width="400" alt="Download Page - Annotations">
 </p>
 
 ## Features
