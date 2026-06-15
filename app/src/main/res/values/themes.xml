@@ -65,6 +65,7 @@
         <!-- Popup menu theme -->
         <item name="popupMenuStyle">@style/Widget.BooxRichAnnotation.PopupMenu</item>
         <item name="android:popupMenuStyle">@style/Widget.BooxRichAnnotation.PopupMenu</item>
+        <item name="actionOverflowMenuStyle">@style/Widget.BooxRichAnnotation.PopupMenu</item>
     </style>
 
     <style name="Theme.BooxRichAnnotation" parent="Base.Theme.BooxRichAnnotation" />

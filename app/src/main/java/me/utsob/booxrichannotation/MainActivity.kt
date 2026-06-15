@@ -2,6 +2,7 @@ package me.utsob.booxrichannotation
 
 import android.app.AlertDialog
 import android.content.Context
+import android.content.Intent
 import android.os.Bundle
 import android.view.Menu
 import android.view.MenuItem
@@ -91,6 +92,10 @@ class MainActivity : AppCompatActivity() {
             }
             R.id.action_refresh -> {
                 loadBooks()
+                true
+            }
+            R.id.action_preferences -> {
+                startActivity(Intent(this, PreferencesActivity::class.java))
                 true
             }
             else -> super.onOptionsItemSelected(item)

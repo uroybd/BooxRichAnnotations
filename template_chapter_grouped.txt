@@ -1,0 +1,23 @@
+# {{ book.title }}
+##### by {{ book.authors }}
+
+{% for annotation in annotations %}
+{% if loop.first or annotation.chapter != annotations[loop.index0 - 1].chapter %}
+## {{ annotation.chapter }}
+{% endif %}
+### Page: {{ annotation.pageNumber }} @ {{ annotation.createdAt }}
+{{ annotation.quote }}
+---
+{{ annotation.note }}
+
+**Color**: {{ annotation.color }}
+**Style**: {{ annotation.style }}
+
+{% endfor %}
+
+---
+
+| Metadata | Value |
+|----------|-------|
+| Total Pages | {{ book.totalPages }} |
+| Annotations | {{ annotations.size }} |
