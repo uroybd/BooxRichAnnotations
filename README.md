@@ -6,6 +6,8 @@ A native Android app for extracting and exporting rich annotations from Onyx Boo
 
 <p align="center">
   <img src="screenshots/main_page.png" width="400" alt="Main Page - Book List">
+  <img src="screenshots/prefs_page.png" width="400" alt="Preferrences">
+  <img src="screenshots/template_editor.png" width="400" alt="Template Editor">
 </p>
 
 ## Features
@@ -13,7 +15,9 @@ A native Android app for extracting and exporting rich annotations from Onyx Boo
 - 📚 **Browse Your Library** - View all your ebooks (EPUB, MOBI, AZW/AZW3) in one place
 - 🔍 **Search** - Find books instantly by title or author
 - 🎨 **Rich Annotations** - Exports annotations with colors, styles, and notes
-- 📥 **JSON Export** - Download annotations in a structured JSON format
+- 📥 **Multiple Export Formats** - JSON, CSV, or customizable text (Markdown, etc.)
+- ✏️ **Template Editor** - Create custom export templates with Pebble templating engine
+- ⚙️ **Preferences** - Configure default export format and text templates
 - 🔄 **Real-time Refresh** - Fetch latest data on demand
 - ⚡ **E-ink Optimized** - Pure black & white theme with zero animations for optimal e-ink display
 - 🎯 **No Duplicates** - Automatically deduplicates edited annotations
@@ -27,13 +31,16 @@ A native Android app for extracting and exporting rich annotations from Onyx Boo
 - Redact
 - Mute
 
-## JSON Export Format
+## Export Formats
 
+### JSON
 ```json
 {
   "title": "Book Title",
   "authors": "Author Name",
   "format": "epub",
+  "totalPages": 300,
+  "exportedAt": 1718465887527,
   "annotations": [
     {
       "quote": "Selected text...",
@@ -47,6 +54,22 @@ A native Android app for extracting and exporting rich annotations from Onyx Boo
   ]
 }
 ```
+
+### CSV
+Simple spreadsheet format with columns:
+- Page, Quote, Chapter, Style, Color, Note, Created At
+
+### Text (Customizable)
+Export to Markdown or any text format using Pebble templates. The default template includes:
+- Title and author header
+- Annotations grouped by chapter
+- Page numbers with timestamps
+- Color and style information
+- Metadata table with export timestamp
+
+**Available template variables:**
+- `book.title`, `book.authors`, `book.format`, `book.totalPages`, `book.exportedAt`
+- `annotations` (list): `pageNumber`, `quote`, `note`, `chapter`, `style`, `color`, `createdAt`
 
 ## Installation
 
@@ -104,7 +127,9 @@ app/src/main/
 ├── java/.../booxrichannotation/
 │   ├── MainActivity.kt              # Book list screen
 │   ├── BookDetailActivity.kt        # Annotation detail screen
-│   ├── BookAdapter.kt               # RecyclerView adapter
+│   ├── PreferencesActivity.kt       # Settings screen
+│   ├── TemplateEditorActivity.kt    # Template editor
+│   ├── BookAdapter.kt               # RecyclerView adapter with export logic
 │   ├── OnyxContentProvider.kt       # Content provider helper
 │   ├── BookMetadata.kt              # Book data model
 │   └── Annotation.kt                # Annotation data model
