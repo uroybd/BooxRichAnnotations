@@ -235,16 +235,21 @@ class BookAdapter(
         val rootObject = JSONObject()
         rootObject.put("title", book.getDisplayTitle())
         rootObject.put("authors", book.getDisplayAuthors())
-        book.idString?.let {
-            val format = when {
-                it.endsWith(".epub", ignoreCase = true) -> "epub"
-                it.endsWith(".mobi", ignoreCase = true) -> "mobi"
-                it.endsWith(".azw", ignoreCase = true) -> "azw"
-                it.endsWith(".azw3", ignoreCase = true) -> "azw3"
-                else -> "unknown"
-            }
+        
+        // Get format from book's name field
+        book.name?.let {
+            val extension = it.substringAfterLast('.', "").lowercase()
+            val format = if (extension == "fbz") "djvu" else extension.ifEmpty { "unknown" }
             rootObject.put("format", format)
+        } ?: run {
+            rootObject.put("format", "unknown")
         }
+        
+        // Add total pages if available
+        book.totalPages?.let {
+            rootObject.put("totalPages", it)
+        }
+        
         rootObject.put("annotations", jsonArray)
         
         return rootObject.toString(2)

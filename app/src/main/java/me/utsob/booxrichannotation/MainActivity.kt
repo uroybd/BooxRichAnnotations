@@ -231,17 +231,8 @@ class MainActivity : AppCompatActivity() {
                 Pair(books, annotations)
             }
             
-            // Filter for ebook formats (epub, mobi, azw, azw3)
-            val ebookBooks = books.filter { book ->
-                val fileName = book.name ?: book.location ?: ""
-                fileName.endsWith(".epub", ignoreCase = true) ||
-                fileName.endsWith(".mobi", ignoreCase = true) ||
-                fileName.endsWith(".azw", ignoreCase = true) ||
-                fileName.endsWith(".azw3", ignoreCase = true)
-            }
-            
             // Group by idString and collect all UUIDs for each file
-            val uniqueBooks = ebookBooks.groupBy { it.idString }
+            val uniqueBooks = books.groupBy { it.idString }
                 .map { (_, booksWithSameFile) ->
                     val firstBook = booksWithSameFile.first()
                     // Collect all UUIDs for this file and keep the most recent lastAccess time
@@ -252,6 +243,10 @@ class MainActivity : AppCompatActivity() {
             
             // Map annotations to books by idString
             val annotationsByIdString = allAnnotations.groupBy { it.idString }
+            
+            android.util.Log.d("MainActivity", "Total unique books loaded: ${uniqueBooks.size}")
+            android.util.Log.d("MainActivity", "Total annotations loaded: ${allAnnotations.size}")
+            android.util.Log.d("MainActivity", "Unique annotation idStrings: ${annotationsByIdString.keys.size}")
             
             // Create BookWithAnnotations list and filter to only books with annotations
             allBooksWithAnnotations = uniqueBooks.mapNotNull { book ->
@@ -264,6 +259,11 @@ class MainActivity : AppCompatActivity() {
                 if (bookAnnotations.isNotEmpty()) {
                     BookWithAnnotations(book, bookAnnotations)
                 } else {
+                    // Log books that have no annotations matched
+                    if (book.getDisplayTitle().contains("godel", ignoreCase = true) || 
+                        book.getDisplayTitle().contains("escher", ignoreCase = true)) {
+                        android.util.Log.w("MainActivity", "Book '${book.getDisplayTitle()}' has 0 annotations matched. UUIDs: ${book.allUuids}")
+                    }
                     null
                 }
             }

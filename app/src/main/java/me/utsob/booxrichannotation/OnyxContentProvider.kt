@@ -60,7 +60,38 @@ object OnyxContentProvider {
                             }
                         }
                         
+                        // Helper function to safely get int value
+                        fun getIntOrNull(columnName: String): Int? {
+                            val index = cursor.getColumnIndex(columnName)
+                            return if (index >= 0) {
+                                try {
+                                    cursor.getInt(index)
+                                } catch (e: Exception) {
+                                    null
+                                }
+                            } else {
+                                null
+                            }
+                        }
+                        
                         val uuid = getStringOrNull("uuid") ?: continue
+                        
+                        // Parse totalPages from progress field (format: "current/total")
+                        val totalPages = getStringOrNull("progress")?.let { progressStr ->
+                            try {
+                                val parts = progressStr.split("/")
+                                if (parts.size == 2) {
+                                    parts[1].trim().toIntOrNull()
+                                } else null
+                            } catch (e: Exception) {
+                                null
+                            }
+                        }
+                        
+                        // Log if we found totalPages for debugging
+                        if (totalPages != null && totalPages > 0) {
+                            Log.d(TAG, "Found totalPages=$totalPages for book: ${getStringOrNull("title") ?: getStringOrNull("name")}")
+                        }
                         
                         val book = BookMetadata(
                             uuid = uuid,
@@ -73,7 +104,8 @@ object OnyxContentProvider {
                             description = getStringOrNull("description"),
                             location = getStringOrNull("location"),
                             idString = getStringOrNull("idString"),
-                            lastAccess = getLongOrNull("lastAccess")
+                            lastAccess = getLongOrNull("lastAccess"),
+                            totalPages = totalPages
                         )
                         
                         books.add(book)
