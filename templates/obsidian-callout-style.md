@@ -46,7 +46,7 @@ exportedAt: "{{ book.exportedAt | date('dd MMM yyyy hh:mm:ss a') }}"
 {%- set calloutTitle = "Stylish" %}
 {%- endif %}
 
-> [!{{ calloutType }}] {{ calloutTitle }}{% if annotation.note %}{% if annotation.note.length <= 50 %}: {{ annotation.note }}{% else %}
-> {{ annotation.note | replace("\n", "\n> ") }}{% endif %}{% endif %}
+> [!{{ calloutType }}] {{ calloutTitle }}{% if annotation.note %}{% set noteLen = annotation.note | length %}{% if noteLen <= 50 %}: {{ annotation.note }}{% else %}
+> {{ annotation.note }}{% endif %}{% endif %}
 
 {% endfor %}
