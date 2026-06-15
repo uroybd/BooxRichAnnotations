@@ -21,6 +21,7 @@ class TemplateEditorActivity : AppCompatActivity() {
         .strictVariables(false)
         .autoEscaping(false)
         .newLineTrimming(false)
+        .extension(CustomPebbleExtension())
         .build()
     
     override fun onCreate(savedInstanceState: Bundle?) {

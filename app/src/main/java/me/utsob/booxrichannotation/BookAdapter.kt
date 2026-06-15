@@ -683,6 +683,7 @@ class BookAdapter(
                 .strictVariables(false)
                 .autoEscaping(false)
                 .newLineTrimming(false)
+                .extension(CustomPebbleExtension())
                 .build()
             val compiledTemplate = pebbleEngine.getLiteralTemplate(template)
             val writer = StringWriter()

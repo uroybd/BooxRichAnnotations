@@ -4,8 +4,8 @@ aliases: ["Notes from {{ book.title }}"]
 author: "{{ book.authors }}"
 totalPages: {{ book.totalPages }}
 totalAnnotations: {{ annotations | length }}
-bookFormat: {{ book.format }}
-exportedAt: {{ book.exportedAt | date("dd MMM yyyy hh:mm:ss a") }}
+bookFormat: "{{ book.format }}"
+exportedAt: "{{ book.exportedAt | date('dd MMM yyyy hh:mm:ss a') }}"
 ---
 # {{ book.title }}
 ##### {{ book.authors }}
@@ -17,7 +17,7 @@ exportedAt: {{ book.exportedAt | date("dd MMM yyyy hh:mm:ss a") }}
 ## {{ annotation.chapter }}
 {%- set prevChapter = annotation.chapter %}
 {%- endif %}
-### Page: {{ annotation.pageNumber }}{% if book.totalPages %} ({{ "%.2f" | format((annotation.pageNumber / book.totalPages) * 100) }}%){% endif %} @ {{ annotation.createdAt | date("dd MMM yyyy hh:mm:ss a") }}
+### Page: {{ annotation.pageNumber }}{% if book.totalPages %} ({{ (annotation.pageNumber / book.totalPages * 100) | round(2) }}%){% endif %} @ {{ annotation.createdAt | date("dd MMM yyyy hh:mm:ss a") }}
 
 {{ annotation.quote }}
 
