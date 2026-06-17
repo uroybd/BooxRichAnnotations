@@ -29,6 +29,7 @@ data class Annotation(
     val createdAt: Long? = null,
     val updatedAt: Long? = null
 ) {
+    
     fun toMap(): Map<String, Any?> {
         return mapOf(
             "rowNumber" to rowNumber,

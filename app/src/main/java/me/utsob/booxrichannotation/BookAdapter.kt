@@ -291,27 +291,30 @@ class BookAdapter(
         for (annotation in sortedAnnotations) {
             val jsonObj = JSONObject()
             
-            annotation.quote?.let { jsonObj.put("quote", it) }
-            annotation.pageNumber?.let { jsonObj.put("pageNumber", it) }
-            annotation.chapter?.let { if (it != "NULL") jsonObj.put("chapter", it) }
-            annotation.createdAt?.let { jsonObj.put("createdAt", it) }
+            // Always include all fields, use empty string if null
+            jsonObj.put("quote", annotation.quote ?: "")
+            jsonObj.put("pageNumber", annotation.pageNumber ?: "")
+            jsonObj.put("chapter", if (annotation.chapter != null && annotation.chapter != "NULL") annotation.chapter else "")
+            jsonObj.put("createdAt", annotation.createdAt ?: "")
             
-            // Convert color integer to hex
-            annotation.color?.let { colorInt ->
+            // Convert color integer to hex, empty string if null
+            val colorHex = annotation.color?.let { colorInt ->
                 try {
                     val colorLong = colorInt.toLong() and 0xFFFFFFFFL
                     val r = (colorLong shr 16) and 0xFF
                     val g = (colorLong shr 8) and 0xFF
                     val b = colorLong and 0xFF
-                    jsonObj.put("color", "#%02x%02x%02x".format(r, g, b))
+                    "#%02x%02x%02x".format(r, g, b)
                 } catch (e: Exception) {
                     Log.w("BookAdapter", "Error converting color: $colorInt", e)
+                    ""
                 }
-            }
+            } ?: ""
+            jsonObj.put("color", colorHex)
             
-            // Convert shape to style name
-            annotation.shape?.let { shape ->
-                val style = when (shape) {
+            // Convert shape to style name, empty string if null
+            val style = annotation.shape?.let { shape ->
+                when (shape) {
                     0 -> "highlight"
                     1 -> "underline"
                     2 -> "dashed"
@@ -320,10 +323,16 @@ class BookAdapter(
                     5 -> "mute"
                     else -> "unknown"
                 }
-                jsonObj.put("style", style)
-            }
+            } ?: ""
+            jsonObj.put("style", style)
             
-            annotation.note?.let { if (it.isNotBlank() && it != "NULL") jsonObj.put("note", it) }
+            // Always include note field, empty string if null/blank/NULL
+            val noteValue = if (annotation.note != null && annotation.note.isNotBlank() && annotation.note != "NULL") {
+                annotation.note
+            } else {
+                ""
+            }
+            jsonObj.put("note", noteValue)
             
             jsonArray.put(jsonObj)
         }
