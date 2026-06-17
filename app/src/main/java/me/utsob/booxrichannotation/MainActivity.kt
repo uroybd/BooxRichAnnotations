@@ -3,7 +3,9 @@ package me.utsob.booxrichannotation
 import android.app.AlertDialog
 import android.content.Context
 import android.content.Intent
+import android.net.Uri
 import android.os.Bundle
+import android.util.Log
 import android.view.Menu
 import android.view.MenuItem
 import android.view.View
@@ -31,6 +33,10 @@ class MainActivity : AppCompatActivity() {
     
     private var allBooksWithAnnotations: List<BookWithAnnotations> = emptyList()
     private var filteredBooksWithAnnotations: List<BookWithAnnotations> = emptyList()
+    
+    // Update checking
+    private var updateMenuItem: MenuItem? = null
+    private var updateInfo: UpdateChecker.UpdateInfo? = null
     
     // Sorting preference
     private enum class SortMode {
@@ -77,15 +83,46 @@ class MainActivity : AppCompatActivity() {
         
         setupSearch()
         loadBooks()
+        checkForUpdates()
+    }
+    
+    private fun checkForUpdates() {
+        lifecycleScope.launch {
+            try {
+                val updateChecker = UpdateChecker(this@MainActivity)
+                val info = updateChecker.checkForUpdate()
+                
+                if (info != null && info.updateAvailable) {
+                    updateInfo = info
+                    updateMenuItem?.isVisible = true
+                    Log.d("MainActivity", "Update available: ${info.latestVersion}")
+                }
+            } catch (e: Exception) {
+                Log.e("MainActivity", "Error checking for updates", e)
+            }
+        }
     }
     
     override fun onCreateOptionsMenu(menu: Menu): Boolean {
         menuInflater.inflate(R.menu.menu_main, menu)
+        updateMenuItem = menu.findItem(R.id.action_update)
+        // Update visibility if we already have update info
+        updateInfo?.let {
+            if (it.updateAvailable) {
+                updateMenuItem?.isVisible = true
+            }
+        }
         return true
     }
     
     override fun onOptionsItemSelected(item: MenuItem): Boolean {
         return when (item.itemId) {
+            R.id.action_update -> {
+                updateInfo?.let { info ->
+                    showUpdateDialog(info)
+                }
+                true
+            }
             R.id.action_sort -> {
                 showSortMenu(item)
                 true
@@ -100,6 +137,23 @@ class MainActivity : AppCompatActivity() {
             }
             else -> super.onOptionsItemSelected(item)
         }
+    }
+    
+    private fun showUpdateDialog(info: UpdateChecker.UpdateInfo) {
+        val dialog = AlertDialog.Builder(this)
+            .setTitle("Update Available")
+            .setMessage("A new version (${info.latestVersion}) is available.\n\nYour current version: ${info.currentVersion}\n\nWould you like to download it?")
+            .setPositiveButton("Download") { _, _ ->
+                // Open GitHub releases page
+                val intent = Intent(Intent.ACTION_VIEW, Uri.parse(info.releaseUrl))
+                startActivity(intent)
+            }
+            .setNegativeButton("Later", null)
+            .create()
+        
+        // Apply e-ink styling
+        dialog.window?.setWindowAnimations(0)
+        dialog.show()
     }
     
     private fun showSortMenu(menuItem: MenuItem) {

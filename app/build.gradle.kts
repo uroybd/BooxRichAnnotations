@@ -14,8 +14,8 @@ android {
         applicationId = "me.utsob.booxrichannotation"
         minSdk = 24
         targetSdk = 36
-        versionCode = 6
-        versionName = "1.4.0"
+        versionCode = 7
+        versionName = "1.4.1"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
     }

@@ -5,6 +5,9 @@
     <!-- Permission to read from Onyx content provider -->
     <uses-permission android:name="com.onyx.READ_APP_DATA" />
     
+    <!-- Permission for internet access (to check for updates) -->
+    <uses-permission android:name="android.permission.INTERNET" />
+    
     <!-- Permission to write to external storage for downloading JSON -->
     <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE"
         android:maxSdkVersion="28" />
