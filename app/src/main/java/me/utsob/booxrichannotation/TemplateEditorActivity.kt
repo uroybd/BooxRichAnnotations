@@ -114,12 +114,14 @@ class TemplateEditorActivity : AppCompatActivity() {
             compiledTemplate.evaluate(StringWriter(), context)
             
             errorText.text = "✓ Template is valid"
-            errorText.setTextColor(android.graphics.Color.parseColor("#006400"))
+            errorText.setTextColor(android.graphics.Color.parseColor("#000000"))
             btnSave.isEnabled = true
             true
         } catch (e: Exception) {
-            errorText.text = "✗ Error: ${e.message}"
-            errorText.setTextColor(android.graphics.Color.parseColor("#8B0000"))
+            // Truncate error message to avoid showing entire template
+            val errorMsg = e.message?.take(200) ?: "Unknown error"
+            errorText.text = "✗ Error: $errorMsg"
+            errorText.setTextColor(android.graphics.Color.parseColor("#000000"))
             btnSave.isEnabled = false
             false
         }

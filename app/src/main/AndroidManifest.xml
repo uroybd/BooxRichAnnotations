@@ -42,12 +42,14 @@
             android:name=".PreferencesActivity"
             android:exported="false"
             android:label="Preferences"
+            android:theme="@style/Theme.BooxRichAnnotation.WithActionBar"
             android:parentActivityName=".MainActivity" />
         
         <activity
             android:name=".TemplateEditorActivity"
             android:exported="false"
             android:label="Template Editor"
+            android:theme="@style/Theme.BooxRichAnnotation.WithActionBar"
             android:windowSoftInputMode="adjustResize"
             android:parentActivityName=".PreferencesActivity" />
         

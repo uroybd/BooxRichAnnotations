@@ -70,6 +70,35 @@
 
     <style name="Theme.BooxRichAnnotation" parent="Base.Theme.BooxRichAnnotation" />
     
+    <!-- Theme with ActionBar for settings/editor activities -->
+    <style name="Theme.BooxRichAnnotation.WithActionBar" parent="Theme.Material3.Light">
+        <!-- Pure white/black colors for e-ink -->
+        <item name="colorPrimary">#000000</item>
+        <item name="colorOnPrimary">#FFFFFF</item>
+        <item name="colorPrimaryContainer">#FFFFFF</item>
+        <item name="colorOnPrimaryContainer">#000000</item>
+        
+        <item name="colorSecondary">#000000</item>
+        <item name="colorOnSecondary">#FFFFFF</item>
+        
+        <item name="android:colorBackground">#FFFFFF</item>
+        <item name="colorSurface">#FFFFFF</item>
+        <item name="colorOnSurface">#000000</item>
+        
+        <item name="android:textColor">#000000</item>
+        <item name="android:textColorPrimary">#000000</item>
+        <item name="android:textColorSecondary">#000000</item>
+        
+        <!-- Disable all animations -->
+        <item name="android:windowAnimationStyle">@null</item>
+        <item name="motionDurationShort1">0</item>
+        <item name="motionDurationShort2">0</item>
+        <item name="motionDurationMedium1">0</item>
+        <item name="motionDurationMedium2">0</item>
+        <item name="motionDurationLong1">0</item>
+        <item name="motionDurationLong2">0</item>
+    </style>
+    
     <!-- Custom dialog theme for e-ink -->
     <style name="Theme.BooxRichAnnotation.Dialog" parent="ThemeOverlay.Material3.MaterialAlertDialog">
         <item name="android:background">@drawable/bg_dialog</item>

@@ -60,6 +60,10 @@
         android:paddingTop="12dp"
         android:paddingBottom="12dp"
         android:minHeight="40dp"
+        android:maxHeight="80dp"
+        android:maxLines="3"
+        android:ellipsize="end"
+        android:scrollbars="vertical"
         tools:ignore="HardcodedText" />
 
     <LinearLayout
