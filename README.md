@@ -71,6 +71,10 @@ Export to Markdown or any text format using Pebble templates. The default templa
 - `book.title`, `book.authors`, `book.format`, `book.totalPages`, `book.exportedAt`
 - `annotations` (list): `pageNumber`, `quote`, `note`, `chapter`, `style`, `color`, `createdAt`
 
+**Available template functions:**
+- `date` filter: `{{ timestamp | date("yyyy-MM-dd HH:mm:ss") }}`
+- `percentage`: `{{ percentage(annotation.pageNumber, book.totalPages, 2) }}` - calculates percentage with precise decimal formatting
+
 ## Installation
 
 ### Requirements
