@@ -20,7 +20,7 @@
     <TextView
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:text="Available variables:\n• book.title, book.authors, book.format, book.totalPages\n• annotations (list): pageNumber, paragraphIndex, quote, note, chapter, style, color, createdAt\n\nFilters:\n• date: {{ timestamp | date(&quot;yyyy-MM-dd HH:mm:ss&quot;) }}\n• round: {{ number | round(2) }} - rounds to 2 decimals"
+        android:text="Available variables:\n• book.title, book.authors, book.format, book.totalPages\n• annotations (list): pageNumber, paragraphIndex, quote, note, chapter, style, color, createdAt\n\nFunctions:\n• date: {{ annotation.createdAt | date(&quot;yyyy-MM-dd HH:mm:ss&quot;) }}\n• percentage: {{ percentage(119, 738, 2) }} returns 16.13"
         android:textColor="#000000"
         android:textSize="17sp"
         android:paddingBottom="12dp"
