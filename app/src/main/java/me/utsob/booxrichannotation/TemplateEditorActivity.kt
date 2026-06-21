@@ -1,8 +1,12 @@
 package me.utsob.booxrichannotation
 
+import android.graphics.Typeface
 import android.os.Bundle
 import android.text.Editable
+import android.text.Spannable
+import android.text.SpannableStringBuilder
 import android.text.TextWatcher
+import android.text.style.StyleSpan
 import android.view.MenuItem
 import android.widget.Button
 import android.widget.EditText
@@ -23,6 +27,8 @@ class TemplateEditorActivity : AppCompatActivity() {
         .newLineTrimming(false)
         .extension(CustomPebbleExtension())
         .build()
+    
+    private var isUpdatingText = false
     
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -57,17 +63,21 @@ class TemplateEditorActivity : AppCompatActivity() {
         
         templateInput.setText(template)
         
-        // Add text watcher for linting
+        // Add text watcher for linting and syntax highlighting
         templateInput.addTextChangedListener(object : TextWatcher {
             override fun afterTextChanged(s: Editable?) {
-                validateTemplate(s?.toString() ?: "")
+                if (!isUpdatingText) {
+                    validateTemplate(s?.toString() ?: "")
+                    applySyntaxHighlighting(s)
+                }
             }
             override fun beforeTextChanged(s: CharSequence?, start: Int, count: Int, after: Int) {}
             override fun onTextChanged(s: CharSequence?, start: Int, before: Int, count: Int) {}
         })
         
-        // Initial validation
+        // Initial validation and highlighting
         validateTemplate(template)
+        applySyntaxHighlighting(templateInput.text)
         
         // Save button
         btnSave.setOnClickListener {
@@ -124,6 +134,108 @@ class TemplateEditorActivity : AppCompatActivity() {
             errorText.setTextColor(android.graphics.Color.parseColor("#000000"))
             btnSave.isEnabled = false
             false
+        }
+    }
+    
+    private fun applySyntaxHighlighting(editable: Editable?) {
+        if (editable == null || editable.isEmpty()) return
+        
+        // Save cursor position
+        val cursorPos = templateInput.selectionStart
+        
+        isUpdatingText = true
+        
+        // Remove existing spans
+        val spans = editable.getSpans(0, editable.length, StyleSpan::class.java)
+        spans.forEach { editable.removeSpan(it) }
+        
+        val text = editable.toString()
+        
+        // Keywords to highlight in bold
+        val keywords = listOf(
+            "for", "endfor", "if", "endif", "else", "elseif", "elif",
+            "set", "block", "endblock", "extends", "include",
+            "macro", "endmacro", "import", "from", "in"
+        )
+        
+        // Pattern to match template tags: {% keyword ... %}
+        val tagPattern = Regex("""\{%-?\s*(\w+)""")
+        tagPattern.findAll(text).forEach { match ->
+            val keyword = match.groupValues[1]
+            if (keyword in keywords) {
+                val start = match.range.first + match.value.indexOf(keyword)
+                val end = start + keyword.length
+                editable.setSpan(
+                    StyleSpan(Typeface.BOLD),
+                    start,
+                    end,
+                    Spannable.SPAN_EXCLUSIVE_EXCLUSIVE
+                )
+            }
+        }
+        
+        // Pattern to match filters and functions: | keyword or keyword(
+        val filterPattern = Regex("""\|\s*(\w+)|\b(percentage|date)\s*\(""")
+        filterPattern.findAll(text).forEach { match ->
+            val keyword = match.groupValues[1].ifEmpty { match.groupValues[2] }
+            if (keyword.isNotEmpty()) {
+                val start = match.range.first + match.value.indexOf(keyword)
+                val end = start + keyword.length
+                editable.setSpan(
+                    StyleSpan(Typeface.BOLD),
+                    start,
+                    end,
+                    Spannable.SPAN_EXCLUSIVE_EXCLUSIVE
+                )
+            }
+        }
+        
+        // Pattern to match variables: word.word or word.word.word, etc.
+        // Matches: book.title, annotation.pageNumber, book.authors, etc.
+        val variablePattern = Regex("""\b([a-zA-Z_]\w*(?:\.[a-zA-Z_]\w*)+)\b""")
+        variablePattern.findAll(text).forEach { match ->
+            val start = match.range.first
+            val end = match.range.last + 1
+            editable.setSpan(
+                StyleSpan(Typeface.ITALIC),
+                start,
+                end,
+                Spannable.SPAN_EXCLUSIVE_EXCLUSIVE
+            )
+        }
+        
+        // Pattern to match standalone collection variables in loops: "annotations", "items", etc.
+        // Matches variables after "for" and "in" keywords
+        val loopVarPattern = Regex("""\{%-?\s*for\s+(\w+)\s+in\s+(\w+)""")
+        loopVarPattern.findAll(text).forEach { match ->
+            // Highlight loop variable (e.g., "annotation" in "for annotation in annotations")
+            val loopVar = match.groupValues[1]
+            val start1 = match.range.first + match.value.indexOf(loopVar)
+            val end1 = start1 + loopVar.length
+            editable.setSpan(
+                StyleSpan(Typeface.ITALIC),
+                start1,
+                end1,
+                Spannable.SPAN_EXCLUSIVE_EXCLUSIVE
+            )
+            
+            // Highlight collection variable (e.g., "annotations")
+            val collectionVar = match.groupValues[2]
+            val start2 = match.range.first + match.value.lastIndexOf(collectionVar)
+            val end2 = start2 + collectionVar.length
+            editable.setSpan(
+                StyleSpan(Typeface.ITALIC),
+                start2,
+                end2,
+                Spannable.SPAN_EXCLUSIVE_EXCLUSIVE
+            )
+        }
+        
+        isUpdatingText = false
+        
+        // Restore cursor position
+        if (cursorPos >= 0 && cursorPos <= editable.length) {
+            templateInput.setSelection(cursorPos)
         }
     }
     

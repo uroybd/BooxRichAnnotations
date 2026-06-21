@@ -17,6 +17,7 @@ import android.widget.PopupMenu
 import android.widget.TextView
 import android.widget.Toast
 import androidx.core.content.FileProvider
+import androidx.documentfile.provider.DocumentFile
 import androidx.recyclerview.widget.RecyclerView
 import io.pebbletemplates.pebble.PebbleEngine
 import kotlinx.coroutines.CoroutineScope
@@ -173,9 +174,24 @@ class BookAdapter(
     }
     
     private fun showOpenFileDialog(context: Context, fileName: String, fileUri: Uri, mimeType: String = "application/json") {
+        val prefs = context.getSharedPreferences(PreferencesActivity.PREFS_NAME, Context.MODE_PRIVATE)
+        val customPathUri = prefs.getString(PreferencesActivity.KEY_SAVE_PATH_URI, null)
+        
+        val locationText = if (customPathUri != null) {
+            try {
+                val treeUri = Uri.parse(customPathUri)
+                val docDir = DocumentFile.fromTreeUri(context, treeUri)
+                docDir?.name ?: "custom folder"
+            } catch (e: Exception) {
+                "Downloads folder"
+            }
+        } else {
+            "Downloads folder"
+        }
+        
         val dialog = AlertDialog.Builder(context)
             .setTitle("File Saved")
-            .setMessage("$fileName saved to Downloads folder.\n\nWould you like to open it?")
+            .setMessage("$fileName saved to $locationText.\n\nWould you like to open it?")
             .setPositiveButton("Open") { dialog, _ ->
                 try {
                     val intent = Intent(Intent.ACTION_VIEW).apply {
@@ -457,7 +473,50 @@ class BookAdapter(
         return field.replace("\"", "\"\"")
     }
     
+    /**
+     * Save file to custom directory if set in preferences, otherwise use Downloads
+     */
+    private fun saveFileToCustomPath(
+        context: Context,
+        fileName: String,
+        content: String,
+        mimeType: String
+    ): Uri? {
+        val prefs = context.getSharedPreferences(PreferencesActivity.PREFS_NAME, Context.MODE_PRIVATE)
+        val customPathUri = prefs.getString(PreferencesActivity.KEY_SAVE_PATH_URI, null)
+        
+        return if (customPathUri != null) {
+            // Use custom directory via DocumentFile API
+            try {
+                val treeUri = Uri.parse(customPathUri)
+                val docDir = DocumentFile.fromTreeUri(context, treeUri)
+                
+                // Delete existing file if present
+                docDir?.findFile(fileName)?.delete()
+                
+                // Create new file
+                val docFile = docDir?.createFile(mimeType, fileName)
+                docFile?.let { file ->
+                    context.contentResolver.openOutputStream(file.uri)?.use { outputStream ->
+                        outputStream.write(content.toByteArray())
+                    }
+                    file.uri
+                }
+            } catch (e: Exception) {
+                Log.e("BookAdapter", "Error saving to custom path: ${e.message}")
+                null
+            }
+        } else {
+            // Use default Downloads folder
+            null
+        }
+    }
+    
     private fun saveCsvFileAndGetUri(context: Context, fileName: String, content: String): Uri? {
+        // Try custom path first
+        saveFileToCustomPath(context, fileName, content, "text/csv")?.let { return it }
+        
+        // Fallback to Downloads
         return if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
             // Android 10+: Use MediaStore API
             val contentValues = ContentValues().apply {
@@ -491,6 +550,10 @@ class BookAdapter(
     }
     
     private fun saveJsonFileAndGetUri(context: Context, fileName: String, content: String): Uri? {
+        // Try custom path first
+        saveFileToCustomPath(context, fileName, content, "application/json")?.let { return it }
+        
+        // Fallback to Downloads
         return if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
             // Android 10+: Use MediaStore API
             val contentValues = ContentValues().apply {
@@ -705,6 +768,10 @@ class BookAdapter(
     }
     
     private fun saveTextFileAndGetUri(context: Context, fileName: String, content: String, extension: String): Uri? {
+        // Try custom path first
+        saveFileToCustomPath(context, fileName, content, "text/plain")?.let { return it }
+        
+        // Fallback to Downloads
         return if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
             // Android 10+: Use MediaStore API
             val contentValues = ContentValues().apply {

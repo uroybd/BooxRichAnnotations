@@ -1,15 +1,17 @@
 package me.utsob.booxrichannotation
 
 import android.content.Intent
+import android.net.Uri
 import android.os.Bundle
 import android.view.MenuItem
-import android.view.View
 import android.widget.Button
 import android.widget.EditText
-import android.widget.LinearLayout
 import android.widget.RadioButton
 import android.widget.RadioGroup
+import android.widget.TextView
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.appcompat.app.AppCompatActivity
+import androidx.documentfile.provider.DocumentFile
 
 class PreferencesActivity : AppCompatActivity() {
     
@@ -19,12 +21,36 @@ class PreferencesActivity : AppCompatActivity() {
     private lateinit var textRadio: RadioButton
     private lateinit var textExtensionInput: EditText
     private lateinit var btnEditTemplate: Button
+    private lateinit var savePathDisplay: TextView
+    private lateinit var btnChooseFolder: Button
+    private lateinit var btnResetFolder: Button
+    
+    // Folder picker launcher
+    private val folderPickerLauncher = registerForActivityResult(
+        ActivityResultContracts.OpenDocumentTree()
+    ) { uri: Uri? ->
+        uri?.let {
+            // Persist URI permission
+            contentResolver.takePersistableUriPermission(
+                it,
+                Intent.FLAG_GRANT_READ_URI_PERMISSION or Intent.FLAG_GRANT_WRITE_URI_PERMISSION
+            )
+            
+            // Save URI to preferences
+            val prefs = getSharedPreferences(PREFS_NAME, MODE_PRIVATE)
+            prefs.edit().putString(KEY_SAVE_PATH_URI, it.toString()).apply()
+            
+            // Update display
+            updateSavePathDisplay()
+        }
+    }
     
     companion object {
         const val PREFS_NAME = "BooxRichAnnotationPrefs"
         const val KEY_EXPORT_FORMAT = "export_format"
         const val KEY_TEXT_EXTENSION = "text_extension"
         const val KEY_TEXT_TEMPLATE = "text_template"
+        const val KEY_SAVE_PATH_URI = "save_path_uri"
         const val FORMAT_JSON = "json"
         const val FORMAT_CSV = "csv"
         const val FORMAT_TEXT = "text"
@@ -73,9 +99,22 @@ class PreferencesActivity : AppCompatActivity() {
         textRadio = findViewById(R.id.radio_text)
         textExtensionInput = findViewById(R.id.text_extension_input)
         btnEditTemplate = findViewById(R.id.btn_edit_template)
+        savePathDisplay = findViewById(R.id.save_path_display)
+        btnChooseFolder = findViewById(R.id.btn_choose_folder)
+        btnResetFolder = findViewById(R.id.btn_reset_folder)
         
-        // Style the button programmatically
+        // Style the buttons programmatically
         btnEditTemplate.apply {
+            backgroundTintList = null
+            setBackgroundResource(R.drawable.bg_dialog_button)
+            setPadding(48, 48, 48, 48)
+        }
+        btnChooseFolder.apply {
+            backgroundTintList = null
+            setBackgroundResource(R.drawable.bg_dialog_button)
+            setPadding(48, 48, 48, 48)
+        }
+        btnResetFolder.apply {
             backgroundTintList = null
             setBackgroundResource(R.drawable.bg_dialog_button)
             setPadding(48, 48, 48, 48)
@@ -93,6 +132,9 @@ class PreferencesActivity : AppCompatActivity() {
         }
         
         textExtensionInput.setText(textExtension)
+        
+        // Update save path display
+        updateSavePathDisplay()
         
         // Save preference when changed
         formatRadioGroup.setOnCheckedChangeListener { _, checkedId ->
@@ -119,6 +161,34 @@ class PreferencesActivity : AppCompatActivity() {
         // Open template editor
         btnEditTemplate.setOnClickListener {
             startActivity(Intent(this, TemplateEditorActivity::class.java))
+        }
+        
+        // Choose custom folder
+        btnChooseFolder.setOnClickListener {
+            folderPickerLauncher.launch(null)
+        }
+        
+        // Reset to default Downloads folder
+        btnResetFolder.setOnClickListener {
+            prefs.edit().remove(KEY_SAVE_PATH_URI).apply()
+            updateSavePathDisplay()
+        }
+    }
+    
+    private fun updateSavePathDisplay() {
+        val prefs = getSharedPreferences(PREFS_NAME, MODE_PRIVATE)
+        val savedUri = prefs.getString(KEY_SAVE_PATH_URI, null)
+        
+        if (savedUri != null) {
+            try {
+                val uri = Uri.parse(savedUri)
+                val docFile = DocumentFile.fromTreeUri(this, uri)
+                savePathDisplay.text = docFile?.name ?: "Custom Folder"
+            } catch (e: Exception) {
+                savePathDisplay.text = "Downloads (default)"
+            }
+        } else {
+            savePathDisplay.text = "Downloads (default)"
         }
     }
     
