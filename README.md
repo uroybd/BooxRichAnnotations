@@ -18,6 +18,7 @@ A native Android app for extracting and exporting rich annotations from Onyx Boo
 - 📥 **Multiple Export Formats** - JSON, CSV, or customizable text (Markdown, etc.)
 - ✏️ **Template Editor** - Create custom export templates with Pebble templating engine
 - 🎨 **Syntax Highlighting** - Bold keywords, italic variables in template editor for better readability
+- 📁 **Custom Save Location** - Choose any folder on your device to save exported files
 - ⚙️ **Preferences** - Configure default export format and text templates
 - 🔄 **Real-time Refresh** - Fetch latest data on demand
 - ⚡ **E-ink Optimized** - Pure black & white theme with zero animations for optimal e-ink display
