@@ -107,6 +107,10 @@ class TemplateEditorActivity : AppCompatActivity() {
                     "authors" to "John Doe",
                     "format" to "epub",
                     "totalPages" to 300,
+                    "publisher" to "Sample Publisher",
+                    "language" to "English",
+                    "isbn" to "978-0-123456-78-9",
+                    "description" to "This is a sample book description.",
                     "exportedAt" to System.currentTimeMillis()
                 ),
                 "annotations" to listOf(

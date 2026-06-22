@@ -42,6 +42,10 @@ A native Android app for extracting and exporting rich annotations from Onyx Boo
   "authors": "Author Name",
   "format": "epub",
   "totalPages": 300,
+  "publisher": "Publisher Name",
+  "language": "English",
+  "isbn": "978-0-123456-78-9",
+  "description": "Book description",
   "exportedAt": 1718465887527,
   "annotations": [
     {
@@ -70,7 +74,7 @@ Export to Markdown or any text format using Pebble templates. The default templa
 - Metadata table with export timestamp
 
 **Available template variables:**
-- `book.title`, `book.authors`, `book.format`, `book.totalPages`, `book.exportedAt`
+- `book.title`, `book.authors`, `book.format`, `book.totalPages`, `book.publisher`, `book.language`, `book.isbn`, `book.description`, `book.exportedAt`
 - `annotations` (list): `pageNumber`, `quote`, `note`, `chapter`, `style`, `color`, `createdAt`
 
 **Available template functions:**

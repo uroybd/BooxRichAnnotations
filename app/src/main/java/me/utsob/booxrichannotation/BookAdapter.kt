@@ -371,6 +371,20 @@ class BookAdapter(
             rootObject.put("totalPages", it)
         }
         
+        // Add publisher, language, ISBN, and description
+        book.publisher?.takeIf { it.isNotBlank() && it != "NULL" }?.let {
+            rootObject.put("publisher", it)
+        }
+        book.language?.takeIf { it.isNotBlank() && it != "NULL" }?.let {
+            rootObject.put("language", it)
+        }
+        book.isbn?.takeIf { it.isNotBlank() && it != "NULL" }?.let {
+            rootObject.put("isbn", it)
+        }
+        book.description?.takeIf { it.isNotBlank() && it != "NULL" }?.let {
+            rootObject.put("description", it)
+        }
+        
         // Add export timestamp (same format as annotation timestamps - milliseconds)
         rootObject.put("exportedAt", System.currentTimeMillis())
         
@@ -744,6 +758,10 @@ class BookAdapter(
                 "authors" to book.getDisplayAuthors(),
                 "format" to format,
                 "totalPages" to book.totalPages,
+                "publisher" to book.publisher?.takeIf { it.isNotBlank() && it != "NULL" },
+                "language" to book.language?.takeIf { it.isNotBlank() && it != "NULL" },
+                "isbn" to book.isbn?.takeIf { it.isNotBlank() && it != "NULL" },
+                "description" to book.description?.takeIf { it.isNotBlank() && it != "NULL" },
                 "exportedAt" to exportedAt
             ),
             "annotations" to annotationMaps

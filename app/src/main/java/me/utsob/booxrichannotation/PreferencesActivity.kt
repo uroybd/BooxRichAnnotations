@@ -81,6 +81,18 @@ class PreferencesActivity : AppCompatActivity() {
 |----------|-------|
 | Total Pages | {{ book.totalPages }} |
 | Annotations | {{ annotations.size }} |
+{%- if book.publisher %}
+| Publisher | {{ book.publisher }} |
+{%- endif %}
+{%- if book.language %}
+| Language | {{ book.language }} |
+{%- endif %}
+{%- if book.isbn %}
+| ISBN | {{ book.isbn }} |
+{%- endif %}
+{%- if book.description %}
+| Description | {{ book.description }} |
+{%- endif %}
 | Exported At | {{ book.exportedAt | date("yyyy-MM-dd HH:mm:ss") }} |
 """
     }
