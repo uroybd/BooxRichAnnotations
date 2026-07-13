@@ -399,6 +399,7 @@ class BookAdapter(
             .replace(Regex("\\s+"), "_")
             .take(50)
         val timestamp = java.text.SimpleDateFormat("yyyyMMdd_HHmmss", java.util.Locale.getDefault()).format(java.util.Date())
+        val extension = extension.trim().trimStart('.').ifEmpty { "txt" }
         return "${sanitizedTitle}_${timestamp}_annotations.$extension"
     }
     
@@ -786,15 +787,21 @@ class BookAdapter(
     }
     
     private fun saveTextFileAndGetUri(context: Context, fileName: String, content: String, extension: String): Uri? {
+        // Use a generic MIME type with no canonical extension of its own so the
+        // storage provider doesn't "correct" fileName by appending its own extension
+        // on top of the one the user configured (e.g. "annotations.md" -> "annotations.md.txt"
+        // would happen if we declared "text/plain", since its canonical extension is .txt).
+        val mimeType = "application/octet-stream"
+
         // Try custom path first
-        saveFileToCustomPath(context, fileName, content, "text/plain")?.let { return it }
-        
+        saveFileToCustomPath(context, fileName, content, mimeType)?.let { return it }
+
         // Fallback to Downloads
         return if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
             // Android 10+: Use MediaStore API
             val contentValues = ContentValues().apply {
                 put(MediaStore.Downloads.DISPLAY_NAME, fileName)
-                put(MediaStore.Downloads.MIME_TYPE, "text/plain")
+                put(MediaStore.Downloads.MIME_TYPE, mimeType)
                 put(MediaStore.Downloads.IS_PENDING, 1)
             }
             
