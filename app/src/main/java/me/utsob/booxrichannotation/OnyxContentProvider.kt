@@ -3,6 +3,7 @@ package me.utsob.booxrichannotation
 import android.content.Context
 import android.net.Uri
 import android.util.Log
+import org.json.JSONObject
 import java.io.File
 import java.io.FileWriter
 
@@ -78,12 +79,24 @@ object OnyxContentProvider {
                         
                         val uuid = getStringOrNull("uuid") ?: continue
                         
-                        // Parse totalPages from progress field (format: "current/total")
-                        val totalPages = getStringOrNull("progress")?.let { progressStr ->
+                        // Parse totalPages: prefer the authoritative "total_page" from
+                        // extraAttributes JSON. The "progress" field's denominator is only
+                        // a real page count when the reader is set to page-number display;
+                        // in percentage-display mode it's a fixed 0-10000 scale (e.g.
+                        // "10000/10000" for a finished book), which is NOT a page count.
+                        val totalPages = getStringOrNull("extraAttributes")?.let { extraAttrStr ->
+                            try {
+                                // "total_page" lives under the nested "backend" object, not at the top level
+                                JSONObject(extraAttrStr).optJSONObject("backend")
+                                    ?.optInt("total_page", -1)?.takeIf { it > 0 }
+                            } catch (e: Exception) {
+                                null
+                            }
+                        } ?: getStringOrNull("progress")?.let { progressStr ->
                             try {
                                 val parts = progressStr.split("/")
                                 if (parts.size == 2) {
-                                    parts[1].trim().toIntOrNull()
+                                    parts[1].trim().toIntOrNull()?.takeIf { it != 10000 }
                                 } else null
                             } catch (e: Exception) {
                                 null
@@ -191,7 +204,9 @@ object OnyxContentProvider {
                             linkNote = getStringOrNull("linkNote"),
                             application = getStringOrNull("application"),
                             position = getStringOrNull("position"),
-                            pageNumber = getIntOrNull("pageNumber"),
+                            // Onyx stores pageNumber 0-indexed, but the reader UI displays
+                            // pages 1-indexed, so convert here to match what the user sees
+                            pageNumber = getIntOrNull("pageNumber")?.plus(1),
                             rectangles = getStringOrNull("rectangles"),
                             color = getIntOrNull("color"),
                             shape = getIntOrNull("shape"),
