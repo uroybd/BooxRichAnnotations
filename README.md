@@ -6,6 +6,8 @@ A native Android app for extracting and exporting rich annotations from Onyx Boo
 
 <p align="center">
   <img src="screenshots/main_page.png" width="400" alt="Main Page - Book List">
+  <img src="screenshots/annotations_page.png" width="400" alt="Annotations Tab - Grouped by Book">
+  <img src="screenshots/book_detail_page.png" width="400" alt="Book Detail - Annotation Cards">
   <img src="screenshots/prefs_page.png" width="400" alt="Preferrences">
   <img src="screenshots/template_editor.png" width="400" alt="Template Editor">
 </p>
@@ -14,8 +16,11 @@ A native Android app for extracting and exporting rich annotations from Onyx Boo
 
 - 📚 **Browse Your Library** - View all your ebooks (EPUB, MOBI, AZW/AZW3) in one place
 - 🔍 **Search** - Find books instantly by title or author
+- 🗂️ **Books & Annotations Tabs** - Browse by book, or see every annotation from every book grouped under collapsible book headers in one scrollable list
+- 📖 **Book Detail View** - Tap into a book to see each annotation as its own card (style, page, chapter, timestamp, quote, note)
+- ✅ **Bulk Selection & Export** - Select individual annotations, a whole book at once, or everything across multiple books, then share/save just that selection
 - 🎨 **Rich Annotations** - Exports annotations with colors, styles, and notes
-- 📥 **Multiple Export Formats** - JSON, CSV, or customizable text (Markdown, etc.)
+- 📥 **Multiple Export Formats** - JSON, CSV, or customizable text (Markdown, etc.), including multi-book exports
 - ✏️ **Template Editor** - Create custom export templates with Pebble templating engine
 - 🎨 **Syntax Highlighting** - Bold keywords, italic variables in template editor for better readability
 - 📁 **Custom Save Location** - Choose any folder on your device to save exported files
@@ -63,7 +68,9 @@ A native Android app for extracting and exporting rich annotations from Onyx Boo
 
 ### CSV
 Simple spreadsheet format with columns:
-- Page, Quote, Chapter, Style, Color, Note, Created At
+- Book, Author, Page, Quote, Chapter, Style, Color, Note, Created At, Book ID
+
+`Book ID` is a stable per-book identifier (not just the title), useful for joining/filtering rows across multiple exports in a spreadsheet or query tool.
 
 ### Text (Customizable)
 Export to Markdown or any text format using Pebble templates. The default template includes:
@@ -80,6 +87,9 @@ Export to Markdown or any text format using Pebble templates. The default templa
 **Available template functions:**
 - `date` filter: `{{ timestamp | date("yyyy-MM-dd HH:mm:ss") }}`
 - `percentage`: `{{ percentage(annotation.pageNumber, book.totalPages, 2) }}` - calculates percentage with precise decimal formatting
+
+### Multi-Book Export
+From the **Annotations** tab, select annotations across several books at once and export or share them together in any format (JSON, CSV, or Text).
 
 ## Installation
 
@@ -101,54 +111,6 @@ cd BooxRichAnnotation
 ```
 
 The APK will be available at: `app/build/outputs/apk/debug/app-debug.apk`
-
-## How It Works
-
-The app queries Onyx's internal content provider to access:
-- **Metadata** - Book information (title, author, format, etc.)
-- **Annotations** - Highlights, notes, and their metadata
-
-No file parsing or external storage access needed - everything is fetched directly from the Onyx system database.
-
-## Technical Details
-
-### Content Providers
-- Authority: `com.onyx.content.database.ContentProvider`
-- Tables: `Metadata`, `Annotation`
-- Requires Android 11+ package visibility declaration
-
-### Deduplication Logic
-When you edit an annotation (change color, add notes, etc.), Onyx creates a new entry. The app automatically:
-1. Groups annotations by their unique identifier (quote + location)
-2. Keeps only the most recent version (highest `updatedAt` timestamp)
-3. Ensures you see the current state of each annotation
-
-### E-ink Optimizations
-- All animations disabled
-- Pure white (#FFFFFF) background
-- Pure black (#000000) text and borders
-- 2dp bold outlines on all UI elements
-- Zero elevation/shadows
-
-## Project Structure
-
-```
-app/src/main/
-├── java/.../booxrichannotation/
-│   ├── MainActivity.kt              # Book list screen
-│   ├── BookDetailActivity.kt        # Annotation detail screen
-│   ├── PreferencesActivity.kt       # Settings screen
-│   ├── TemplateEditorActivity.kt    # Template editor
-│   ├── BookAdapter.kt               # RecyclerView adapter with export logic
-│   ├── OnyxContentProvider.kt       # Content provider helper
-│   ├── BookMetadata.kt              # Book data model
-│   └── Annotation.kt                # Annotation data model
-└── res/
-    ├── layout/                      # UI layouts
-    ├── menu/                        # Toolbar menus
-    ├── drawable/                    # Backgrounds, icons
-    └── values/                      # Themes, strings, colors
-```
 
 ## Permissions
 
