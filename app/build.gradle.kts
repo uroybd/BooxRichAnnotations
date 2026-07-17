@@ -14,8 +14,8 @@ android {
         applicationId = "me.utsob.booxrichannotation"
         minSdk = 24
         targetSdk = 36
-        versionCode = 14
-        versionName = "1.9.2"
+        versionCode = 16
+        versionName = "1.10.1"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
     }
@@ -29,7 +29,25 @@ android {
             signingConfig = signingConfigs.getByName("debug")
         }
     }
-    
+
+    flavorDimensions += "distribution"
+    productFlavors {
+        create("standard") {
+            dimension = "distribution"
+            // GitHub releases: checks for and prompts about new releases on GitHub
+            buildConfigField("boolean", "ENABLE_UPDATE_CHECK", "true")
+        }
+        create("fdroid") {
+            dimension = "distribution"
+            // F-Droid is the sole update channel; never prompt users off-store
+            buildConfigField("boolean", "ENABLE_UPDATE_CHECK", "false")
+        }
+    }
+
+    buildFeatures {
+        buildConfig = true
+    }
+
     splits {
         abi {
             isEnable = true

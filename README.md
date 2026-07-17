@@ -96,12 +96,12 @@ From the **Annotations** tab, select annotations across several books at once an
 
 ### Build from Source
 ```bash
-git clone https://github.com/yourusername/BooxRichAnnotation.git
-cd BooxRichAnnotation
-./gradlew assembleDebug
+git clone https://github.com/uroybd/BooxRichAnnotations.git
+cd BooxRichAnnotations
+./gradlew assembleStandardDebug
 ```
 
-The APK will be available at: `app/build/outputs/apk/debug/app-debug.apk`
+The APK will be available at: `app/build/outputs/apk/standard/debug/app-standard-debug.apk`
 
 ## Permissions
 

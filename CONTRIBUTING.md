@@ -5,7 +5,11 @@ This file contains instructions for building and releasing this Android app.
 ## Building a Release
 
 ### 1. Update Version Numbers
-Edit `app/build.gradle.kts`:
+```bash
+make bump VERSION=X.Y.Z
+```
+This increments `versionCode` by 1 and sets `versionName` to `X.Y.Z` in
+`app/build.gradle.kts`. Equivalent to editing the file by hand:
 ```kotlin
 versionCode = X  // Increment by 1
 versionName = "X.Y.Z"  // Semantic versioning
@@ -13,13 +17,17 @@ versionName = "X.Y.Z"  // Semantic versioning
 
 ### 2. Build Release APKs
 ```bash
-./gradlew assembleRelease --no-daemon
+./gradlew assembleStandardRelease --no-daemon
 ```
 
-This generates three APK variants in `app/build/outputs/apk/release/`:
-- `app-arm64-v8a-release.apk` - 64-bit ARM (modern devices)
-- `app-armeabi-v7a-release.apk` - 32-bit ARM (older devices)
-- `app-universal-release.apk` - All architectures (larger size)
+This generates three APK variants in `app/build/outputs/apk/standard/release/`:
+- `app-standard-arm64-v8a-release.apk` - 64-bit ARM (modern devices)
+- `app-standard-armeabi-v7a-release.apk` - 32-bit ARM (older devices)
+- `app-standard-universal-release.apk` - All architectures (larger size)
+
+The `standard` flavor is used for GitHub releases (includes the in-app update
+checker). A separate `fdroid` flavor exists for F-Droid builds, which disables
+the update checker since F-Droid is the sole update channel for that build.
 
 ### 3. Organize Release Folder
 ```bash
@@ -27,11 +35,11 @@ This generates three APK variants in `app/build/outputs/apk/release/`:
 mkdir -p releases/X.Y.Z
 
 # Copy APKs with proper naming
-cp app/build/outputs/apk/release/app-arm64-v8a-release.apk \
+cp app/build/outputs/apk/standard/release/app-standard-arm64-v8a-release.apk \
    releases/X.Y.Z/boox-rich-annotation-X.Y.Z-arm64-v8a.apk
-cp app/build/outputs/apk/release/app-armeabi-v7a-release.apk \
+cp app/build/outputs/apk/standard/release/app-standard-armeabi-v7a-release.apk \
    releases/X.Y.Z/boox-rich-annotation-X.Y.Z-armeabi-v7a.apk
-cp app/build/outputs/apk/release/app-universal-release.apk \
+cp app/build/outputs/apk/standard/release/app-standard-universal-release.apk \
    releases/X.Y.Z/boox-rich-annotation-X.Y.Z-universal.apk
 ```
 
