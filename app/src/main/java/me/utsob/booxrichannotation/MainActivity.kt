@@ -197,6 +197,7 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun checkForUpdates() {
+        if (!BuildConfig.ENABLE_UPDATE_CHECK) return
         lifecycleScope.launch {
             try {
                 val updateChecker = UpdateChecker(this@MainActivity)

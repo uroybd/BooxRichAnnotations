@@ -1,0 +1,1 @@
+Added F-Droid build support (this release disables the in-app GitHub update checker on F-Droid builds, since F-Droid is the sole update channel).
