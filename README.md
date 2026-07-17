@@ -29,15 +29,6 @@ A native Android app for extracting and exporting rich annotations from Onyx Boo
 - ⚡ **E-ink Optimized** - Pure black & white theme with zero animations for optimal e-ink display
 - 🎯 **No Duplicates** - Automatically deduplicates edited annotations
 
-## Supported Annotation Styles
-
-- Highlight (filled)
-- Underline (straight)
-- Dashed underline
-- Wavy underline
-- Redact
-- Mute
-
 ## Export Formats
 
 ### JSON
