@@ -14,7 +14,7 @@ data class BookMetadata(
     val lastAccess: Long? = null,
     val totalPages: Int? = null,
     val allUuids: List<String> = listOf(uuid) // Track all UUIDs for this file
-) {
+) : java.io.Serializable {
     fun getDisplayTitle(): String {
         return when {
             !title.isNullOrBlank() && title != "NULL" -> title
