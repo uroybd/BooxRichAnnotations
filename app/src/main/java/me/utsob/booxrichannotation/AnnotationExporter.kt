@@ -54,6 +54,30 @@ object AnnotationExporter {
         popup.show()
     }
 
+    /** Same format-choice popup as [showExportMenu], for a selection spanning multiple books. */
+    fun showMultiBookExportMenu(view: View, context: Context, scope: CoroutineScope, selections: List<Pair<BookMetadata, List<Annotation>>>) {
+        val popup = PopupMenu(context, view)
+        popup.menuInflater.inflate(R.menu.menu_book_export, popup.menu)
+        popup.setOnMenuItemClickListener { item ->
+            when (item.itemId) {
+                R.id.action_export_json -> {
+                    saveMultiBookAnnotationsAsJson(context, scope, selections)
+                    true
+                }
+                R.id.action_export_csv -> {
+                    saveMultiBookAnnotationsAsCsv(context, scope, selections)
+                    true
+                }
+                R.id.action_export_text -> {
+                    saveMultiBookAnnotationsAsText(context, scope, selections)
+                    true
+                }
+                else -> false
+            }
+        }
+        popup.show()
+    }
+
     private fun defaultFormat(context: Context): String {
         val prefs = context.getSharedPreferences(PreferencesActivity.PREFS_NAME, Context.MODE_PRIVATE)
         return prefs.getString(PreferencesActivity.KEY_EXPORT_FORMAT, PreferencesActivity.FORMAT_JSON)
@@ -75,6 +99,176 @@ object AnnotationExporter {
             PreferencesActivity.FORMAT_CSV -> shareAnnotationsAsCsv(context, scope, book, annotations)
             PreferencesActivity.FORMAT_TEXT -> shareAnnotationsAsText(context, scope, book, annotations)
             else -> shareAnnotationsAsJson(context, scope, book, annotations)
+        }
+    }
+
+    /** Saves a selection spanning multiple books, using whichever format is configured as default in preferences. */
+    fun saveMultiBookInDefaultFormat(context: Context, scope: CoroutineScope, selections: List<Pair<BookMetadata, List<Annotation>>>) {
+        when (defaultFormat(context)) {
+            PreferencesActivity.FORMAT_CSV -> saveMultiBookAnnotationsAsCsv(context, scope, selections)
+            PreferencesActivity.FORMAT_TEXT -> saveMultiBookAnnotationsAsText(context, scope, selections)
+            else -> saveMultiBookAnnotationsAsJson(context, scope, selections)
+        }
+    }
+
+    /** Shares a selection spanning multiple books, using whichever format is configured as default in preferences. */
+    fun shareMultiBookInDefaultFormat(context: Context, scope: CoroutineScope, selections: List<Pair<BookMetadata, List<Annotation>>>) {
+        when (defaultFormat(context)) {
+            PreferencesActivity.FORMAT_CSV -> shareMultiBookAnnotationsAsCsv(context, scope, selections)
+            PreferencesActivity.FORMAT_TEXT -> shareMultiBookAnnotationsAsText(context, scope, selections)
+            else -> shareMultiBookAnnotationsAsJson(context, scope, selections)
+        }
+    }
+
+    fun saveMultiBookAnnotationsAsJson(context: Context, scope: CoroutineScope, selections: List<Pair<BookMetadata, List<Annotation>>>) {
+        scope.launch {
+            try {
+                val jsonContent = buildMultiBookJsonContent(selections)
+                val fileName = generateMultiBookFileName()
+
+                val fileUri = withContext(Dispatchers.IO) { saveJsonFileAndGetUri(context, fileName, jsonContent) }
+
+                if (fileUri != null) {
+                    withContext(Dispatchers.Main) { showOpenFileDialog(context, fileName, fileUri, "application/json") }
+                } else {
+                    withContext(Dispatchers.Main) { Toast.makeText(context, "Save failed", Toast.LENGTH_SHORT).show() }
+                }
+            } catch (e: Exception) {
+                Log.e(TAG, "Error saving multi-book annotations", e)
+                withContext(Dispatchers.Main) { Toast.makeText(context, "Error: ${e.message}", Toast.LENGTH_SHORT).show() }
+            }
+        }
+    }
+
+    fun shareMultiBookAnnotationsAsJson(context: Context, scope: CoroutineScope, selections: List<Pair<BookMetadata, List<Annotation>>>) {
+        scope.launch {
+            try {
+                val jsonContent = buildMultiBookJsonContent(selections)
+                val fileName = generateMultiBookFileName()
+
+                val fileUri = withContext(Dispatchers.IO) { saveToTempAndGetUri(context, fileName, jsonContent) }
+
+                if (fileUri != null) {
+                    withContext(Dispatchers.Main) {
+                        val shareIntent = Intent(Intent.ACTION_SEND).apply {
+                            type = "application/json"
+                            putExtra(Intent.EXTRA_STREAM, fileUri)
+                            putExtra(Intent.EXTRA_SUBJECT, "Annotations - ${selections.size} books")
+                            addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
+                        }
+                        context.startActivity(Intent.createChooser(shareIntent, "Share annotations"))
+                    }
+                } else {
+                    withContext(Dispatchers.Main) { Toast.makeText(context, "Share failed", Toast.LENGTH_SHORT).show() }
+                }
+            } catch (e: Exception) {
+                Log.e(TAG, "Error sharing multi-book annotations", e)
+                withContext(Dispatchers.Main) { Toast.makeText(context, "Error: ${e.message}", Toast.LENGTH_SHORT).show() }
+            }
+        }
+    }
+
+    fun saveMultiBookAnnotationsAsCsv(context: Context, scope: CoroutineScope, selections: List<Pair<BookMetadata, List<Annotation>>>) {
+        scope.launch {
+            try {
+                val csvContent = buildMultiBookCsvContent(selections)
+                val fileName = generateMultiBookFileName("csv")
+
+                val fileUri = withContext(Dispatchers.IO) { saveCsvFileAndGetUri(context, fileName, csvContent) }
+
+                if (fileUri != null) {
+                    withContext(Dispatchers.Main) { showOpenFileDialog(context, fileName, fileUri, "text/csv") }
+                } else {
+                    withContext(Dispatchers.Main) { Toast.makeText(context, "Failed to save CSV file", Toast.LENGTH_SHORT).show() }
+                }
+            } catch (e: Exception) {
+                Log.e(TAG, "Error saving multi-book CSV", e)
+                withContext(Dispatchers.Main) { Toast.makeText(context, "Error: ${e.message}", Toast.LENGTH_SHORT).show() }
+            }
+        }
+    }
+
+    fun shareMultiBookAnnotationsAsCsv(context: Context, scope: CoroutineScope, selections: List<Pair<BookMetadata, List<Annotation>>>) {
+        scope.launch {
+            try {
+                val csvContent = buildMultiBookCsvContent(selections)
+                val fileName = generateMultiBookFileName("csv")
+
+                val fileUri = withContext(Dispatchers.IO) { saveToTempAndGetUri(context, fileName, csvContent) }
+
+                if (fileUri != null) {
+                    withContext(Dispatchers.Main) {
+                        val shareIntent = Intent(Intent.ACTION_SEND).apply {
+                            type = "text/csv"
+                            putExtra(Intent.EXTRA_STREAM, fileUri)
+                            putExtra(Intent.EXTRA_SUBJECT, "Annotations - ${selections.size} books")
+                            addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
+                        }
+                        context.startActivity(Intent.createChooser(shareIntent, "Share annotations"))
+                    }
+                } else {
+                    withContext(Dispatchers.Main) { Toast.makeText(context, "Share failed", Toast.LENGTH_SHORT).show() }
+                }
+            } catch (e: Exception) {
+                Log.e(TAG, "Error sharing multi-book CSV", e)
+                withContext(Dispatchers.Main) { Toast.makeText(context, "Error: ${e.message}", Toast.LENGTH_SHORT).show() }
+            }
+        }
+    }
+
+    fun saveMultiBookAnnotationsAsText(context: Context, scope: CoroutineScope, selections: List<Pair<BookMetadata, List<Annotation>>>) {
+        scope.launch {
+            try {
+                val prefs = context.getSharedPreferences(PreferencesActivity.PREFS_NAME, Context.MODE_PRIVATE)
+                val extension = prefs.getString(PreferencesActivity.KEY_TEXT_EXTENSION, PreferencesActivity.DEFAULT_TEXT_EXTENSION)
+                    ?: PreferencesActivity.DEFAULT_TEXT_EXTENSION
+
+                val textContent = buildMultiBookTextContent(context, selections)
+                val fileName = generateMultiBookFileName(extension)
+
+                val fileUri = withContext(Dispatchers.IO) { saveTextFileAndGetUri(context, fileName, textContent, extension) }
+
+                if (fileUri != null) {
+                    withContext(Dispatchers.Main) { showOpenFileDialog(context, fileName, fileUri, "text/plain") }
+                } else {
+                    withContext(Dispatchers.Main) { Toast.makeText(context, "Failed to save text file", Toast.LENGTH_SHORT).show() }
+                }
+            } catch (e: Exception) {
+                Log.e(TAG, "Error saving multi-book text", e)
+                withContext(Dispatchers.Main) { Toast.makeText(context, "Error: ${e.message}", Toast.LENGTH_SHORT).show() }
+            }
+        }
+    }
+
+    fun shareMultiBookAnnotationsAsText(context: Context, scope: CoroutineScope, selections: List<Pair<BookMetadata, List<Annotation>>>) {
+        scope.launch {
+            try {
+                val prefs = context.getSharedPreferences(PreferencesActivity.PREFS_NAME, Context.MODE_PRIVATE)
+                val extension = prefs.getString(PreferencesActivity.KEY_TEXT_EXTENSION, PreferencesActivity.DEFAULT_TEXT_EXTENSION)
+                    ?: PreferencesActivity.DEFAULT_TEXT_EXTENSION
+
+                val textContent = buildMultiBookTextContent(context, selections)
+                val fileName = generateMultiBookFileName(extension)
+
+                val fileUri = withContext(Dispatchers.IO) { saveToTempAndGetUri(context, fileName, textContent) }
+
+                if (fileUri != null) {
+                    withContext(Dispatchers.Main) {
+                        val shareIntent = Intent(Intent.ACTION_SEND).apply {
+                            type = "text/plain"
+                            putExtra(Intent.EXTRA_STREAM, fileUri)
+                            putExtra(Intent.EXTRA_SUBJECT, "Annotations - ${selections.size} books")
+                            addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
+                        }
+                        context.startActivity(Intent.createChooser(shareIntent, "Share annotations"))
+                    }
+                } else {
+                    withContext(Dispatchers.Main) { Toast.makeText(context, "Share failed", Toast.LENGTH_SHORT).show() }
+                }
+            } catch (e: Exception) {
+                Log.e(TAG, "Error sharing multi-book text", e)
+                withContext(Dispatchers.Main) { Toast.makeText(context, "Error: ${e.message}", Toast.LENGTH_SHORT).show() }
+            }
         }
     }
 
@@ -230,6 +424,14 @@ object AnnotationExporter {
     }
 
     private fun buildJsonContent(book: BookMetadata, annotations: List<Annotation>): String {
+        val rootObject = buildBookJsonObject(book, annotations)
+        // Add export timestamp (same format as annotation timestamps - milliseconds)
+        rootObject.put("exportedAt", System.currentTimeMillis())
+        return rootObject.toString(2)
+    }
+
+    /** One book's title/authors/metadata + its annotations array, without an exportedAt field. */
+    private fun buildBookJsonObject(book: BookMetadata, annotations: List<Annotation>): JSONObject {
         // Sort annotations by page number first, then by location in document
         val sortedAnnotations = annotations.sortedWith(
             compareBy({ it.pageNumber }, { it.locationBeginInt })
@@ -286,43 +488,58 @@ object AnnotationExporter {
             jsonArray.put(jsonObj)
         }
 
-        val rootObject = JSONObject()
-        rootObject.put("title", book.getDisplayTitle())
-        rootObject.put("authors", book.getDisplayAuthors())
+        val bookObject = JSONObject()
+        bookObject.put("title", book.getDisplayTitle())
+        bookObject.put("authors", book.getDisplayAuthors())
 
         // Get format from book's name field
         book.name?.let {
             val extension = it.substringAfterLast('.', "").lowercase()
             val format = if (extension == "fbz") "djvu" else extension.ifEmpty { "unknown" }
-            rootObject.put("format", format)
+            bookObject.put("format", format)
         } ?: run {
-            rootObject.put("format", "unknown")
+            bookObject.put("format", "unknown")
         }
 
         // Add total pages if available
         book.totalPages?.let {
-            rootObject.put("totalPages", it)
+            bookObject.put("totalPages", it)
         }
 
         // Add publisher, language, ISBN, and description
         book.publisher?.takeIf { it.isNotBlank() && it != "NULL" }?.let {
-            rootObject.put("publisher", it)
+            bookObject.put("publisher", it)
         }
         book.language?.takeIf { it.isNotBlank() && it != "NULL" }?.let {
-            rootObject.put("language", it)
+            bookObject.put("language", it)
         }
         book.isbn?.takeIf { it.isNotBlank() && it != "NULL" }?.let {
-            rootObject.put("isbn", it)
+            bookObject.put("isbn", it)
         }
         book.description?.takeIf { it.isNotBlank() && it != "NULL" }?.let {
-            rootObject.put("description", it)
+            bookObject.put("description", it)
         }
 
-        // Add export timestamp (same format as annotation timestamps - milliseconds)
-        rootObject.put("exportedAt", System.currentTimeMillis())
+        bookObject.put("annotations", jsonArray)
 
-        rootObject.put("annotations", jsonArray)
+        return bookObject
+    }
 
+    private fun buildMultiBookJsonContent(selections: List<Pair<BookMetadata, List<Annotation>>>): String {
+        // Same timestamp at both levels: consumers that only look at one book entry in
+        // "books" (rather than the batch root) still get an exportedAt without extra lookup.
+        val exportedAt = System.currentTimeMillis()
+
+        val booksArray = JSONArray()
+        for ((book, annotations) in selections) {
+            val bookObject = buildBookJsonObject(book, annotations)
+            bookObject.put("exportedAt", exportedAt)
+            booksArray.put(bookObject)
+        }
+
+        val rootObject = JSONObject()
+        rootObject.put("exportedAt", exportedAt)
+        rootObject.put("books", booksArray)
         return rootObject.toString(2)
     }
 
@@ -334,6 +551,12 @@ object AnnotationExporter {
         val timestamp = java.text.SimpleDateFormat("yyyyMMdd_HHmmss", java.util.Locale.getDefault()).format(java.util.Date())
         val ext = extension.trim().trimStart('.').ifEmpty { "txt" }
         return "${sanitizedTitle}_${timestamp}_annotations.$ext"
+    }
+
+    private fun generateMultiBookFileName(extension: String = "json"): String {
+        val timestamp = java.text.SimpleDateFormat("yyyyMMdd_HHmmss", java.util.Locale.getDefault()).format(java.util.Date())
+        val ext = extension.trim().trimStart('.').ifEmpty { "txt" }
+        return "Annotations_${timestamp}.$ext"
     }
 
     fun saveAnnotationsAsCsv(context: Context, scope: CoroutineScope, book: BookMetadata, annotations: List<Annotation>) {
@@ -364,56 +587,74 @@ object AnnotationExporter {
         }
     }
 
+    /** Stable per-book identifier for joining/filtering exported rows, matching the key used to group annotations to books elsewhere in the app. */
+    private fun bookId(book: BookMetadata): String = book.idString ?: book.uuid
+
     private fun buildCsvContent(book: BookMetadata, annotations: List<Annotation>): String {
-        // Sort annotations by page number first, then by location in document
-        val sortedAnnotations = annotations.sortedWith(
-            compareBy({ it.pageNumber }, { it.locationBeginInt })
-        )
-
         val csv = StringBuilder()
+        csv.append("Book,Author,Page,Quote,Chapter,Style,Color,Note,Created At,Book ID\n")
+        val bookTitle = escapeCsvField(book.getDisplayTitle())
+        val bookAuthor = escapeCsvField(book.getDisplayAuthors())
+        val bookIdField = escapeCsvField(bookId(book))
+        sortedForCsv(annotations).forEach {
+            csv.append("\"$bookTitle\",\"$bookAuthor\",").append(csvDataRow(it)).append(",\"$bookIdField\"\n")
+        }
+        return csv.toString()
+    }
 
-        // CSV header row
-        csv.append("Page,Quote,Chapter,Style,Color,Note,Created At\n")
-
-        // Data rows
-        for (annotation in sortedAnnotations) {
-            val page = annotation.pageNumber?.toString() ?: ""
-            val quote = escapeCsvField(annotation.quote ?: "")
-            val chapter = if (annotation.chapter != null && annotation.chapter != "NULL")
-                escapeCsvField(annotation.chapter) else ""
-
-            // Convert shape to style name
-            val style = when (annotation.shape) {
-                0 -> "highlight"
-                1 -> "underline"
-                2 -> "dashed"
-                3 -> "wavy"
-                4 -> "redact"
-                5 -> "mute"
-                else -> ""
+    private fun buildMultiBookCsvContent(selections: List<Pair<BookMetadata, List<Annotation>>>): String {
+        val csv = StringBuilder()
+        csv.append("Book,Author,Page,Quote,Chapter,Style,Color,Note,Created At,Book ID\n")
+        for ((book, annotations) in selections) {
+            val bookTitle = escapeCsvField(book.getDisplayTitle())
+            val bookAuthor = escapeCsvField(book.getDisplayAuthors())
+            val bookIdField = escapeCsvField(bookId(book))
+            sortedForCsv(annotations).forEach {
+                csv.append("\"$bookTitle\",\"$bookAuthor\",").append(csvDataRow(it)).append(",\"$bookIdField\"\n")
             }
+        }
+        return csv.toString()
+    }
 
-            // Convert color integer to hex
-            val color = annotation.color?.let { colorInt ->
-                try {
-                    val colorLong = colorInt.toLong() and 0xFFFFFFFFL
-                    val r = (colorLong shr 16) and 0xFF
-                    val g = (colorLong shr 8) and 0xFF
-                    val b = colorLong and 0xFF
-                    "#%02x%02x%02x".format(r, g, b)
-                } catch (e: Exception) {
-                    ""
-                }
-            } ?: ""
+    private fun sortedForCsv(annotations: List<Annotation>): List<Annotation> =
+        annotations.sortedWith(compareBy({ it.pageNumber }, { it.locationBeginInt }))
 
-            val note = if (annotation.note != null && annotation.note.isNotBlank() && annotation.note != "NULL")
-                escapeCsvField(annotation.note) else ""
-            val createdAt = annotation.createdAt ?: ""
+    /** One CSV row (Page,Quote,Chapter,Style,Color,Note,Created At) for a single annotation, no trailing newline. */
+    private fun csvDataRow(annotation: Annotation): String {
+        val page = annotation.pageNumber?.toString() ?: ""
+        val quote = escapeCsvField(annotation.quote ?: "")
+        val chapter = if (annotation.chapter != null && annotation.chapter != "NULL")
+            escapeCsvField(annotation.chapter) else ""
 
-            csv.append("$page,\"$quote\",$chapter,$style,$color,\"$note\",$createdAt\n")
+        // Convert shape to style name
+        val style = when (annotation.shape) {
+            0 -> "highlight"
+            1 -> "underline"
+            2 -> "dashed"
+            3 -> "wavy"
+            4 -> "redact"
+            5 -> "mute"
+            else -> ""
         }
 
-        return csv.toString()
+        // Convert color integer to hex
+        val color = annotation.color?.let { colorInt ->
+            try {
+                val colorLong = colorInt.toLong() and 0xFFFFFFFFL
+                val r = (colorLong shr 16) and 0xFF
+                val g = (colorLong shr 8) and 0xFF
+                val b = colorLong and 0xFF
+                "#%02x%02x%02x".format(r, g, b)
+            } catch (e: Exception) {
+                ""
+            }
+        } ?: ""
+
+        val note = if (annotation.note != null && annotation.note.isNotBlank() && annotation.note != "NULL")
+            escapeCsvField(annotation.note) else ""
+        val createdAt = annotation.createdAt ?: ""
+
+        return "$page,\"$quote\",$chapter,$style,$color,\"$note\",$createdAt"
     }
 
     private fun escapeCsvField(field: String): String {
@@ -716,6 +957,13 @@ object AnnotationExporter {
         } catch (e: Exception) {
             Log.e(TAG, "Error rendering template", e)
             "Error rendering template: ${e.message}"
+        }
+    }
+
+    /** Renders each book's annotations through the same per-book template, concatenated with a separator. */
+    private fun buildMultiBookTextContent(context: Context, selections: List<Pair<BookMetadata, List<Annotation>>>): String {
+        return selections.joinToString(separator = "\n\n---\n\n") { (book, annotations) ->
+            buildTextContent(context, book, annotations)
         }
     }
 

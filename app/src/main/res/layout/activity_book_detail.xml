@@ -107,9 +107,22 @@
             tools:text="3 selected" />
 
         <ImageButton
+            android:id="@+id/btn_export_menu_selected"
+            android:layout_width="48dp"
+            android:layout_height="48dp"
+            android:src="@drawable/ic_more_vert"
+            android:background="@drawable/bg_button"
+            android:contentDescription="More save options"
+            android:tooltipText="Save as..."
+            android:scaleType="centerInside"
+            android:padding="8dp"
+            tools:ignore="HardcodedText" />
+
+        <ImageButton
             android:id="@+id/btn_share_selected"
             android:layout_width="48dp"
             android:layout_height="48dp"
+            android:layout_marginStart="8dp"
             android:src="@drawable/ic_share"
             android:background="@drawable/bg_button"
             android:contentDescription="Share selected annotations"

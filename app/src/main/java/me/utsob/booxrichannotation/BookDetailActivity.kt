@@ -24,6 +24,7 @@ class BookDetailActivity : AppCompatActivity() {
     private lateinit var annotationAdapter: AnnotationAdapter
     private lateinit var selectAllCheckbox: CheckBox
     private lateinit var selectionCountText: TextView
+    private lateinit var exportMenuButton: ImageButton
     private lateinit var shareSelectedButton: ImageButton
     private lateinit var saveSelectedButton: ImageButton
 
@@ -63,6 +64,7 @@ class BookDetailActivity : AppCompatActivity() {
         val selectionToolbar = findViewById<View>(R.id.selection_toolbar)
         selectAllCheckbox = findViewById(R.id.select_all_checkbox)
         selectionCountText = findViewById(R.id.selection_count_text)
+        exportMenuButton = findViewById(R.id.btn_export_menu_selected)
         shareSelectedButton = findViewById(R.id.btn_share_selected)
         saveSelectedButton = findViewById(R.id.btn_save_selected)
         val recyclerView = findViewById<RecyclerView>(R.id.annotations_recycler_view)
@@ -91,6 +93,13 @@ class BookDetailActivity : AppCompatActivity() {
 
             selectAllCheckbox.setOnCheckedChangeListener { _, isChecked ->
                 if (isChecked) annotationAdapter.selectAll() else annotationAdapter.clearSelection()
+            }
+
+            exportMenuButton.setOnClickListener {
+                val selected = annotationAdapter.getSelectedAnnotations()
+                if (selected.isNotEmpty()) {
+                    AnnotationExporter.showExportMenu(it, this, lifecycleScope, book, selected)
+                }
             }
 
             shareSelectedButton.setOnClickListener {
@@ -123,8 +132,10 @@ class BookDetailActivity : AppCompatActivity() {
         selectionCountText.text = if (selectedCount > 0) "$selectedCount selected" else "Nothing selected"
 
         val hasSelection = selectedCount > 0
+        exportMenuButton.isEnabled = hasSelection
         shareSelectedButton.isEnabled = hasSelection
         saveSelectedButton.isEnabled = hasSelection
+        exportMenuButton.alpha = if (hasSelection) 1.0f else 0.4f
         shareSelectedButton.alpha = if (hasSelection) 1.0f else 0.4f
         saveSelectedButton.alpha = if (hasSelection) 1.0f else 0.4f
     }
