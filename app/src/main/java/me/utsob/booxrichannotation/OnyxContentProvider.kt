@@ -120,7 +120,8 @@ object OnyxContentProvider {
                             location = getStringOrNull("location"),
                             idString = getStringOrNull("idString"),
                             lastAccess = getLongOrNull("lastAccess"),
-                            totalPages = totalPages
+                            totalPages = totalPages,
+                            status = getIntOrNull("status")
                         )
                         
                         books.add(book)

@@ -66,6 +66,7 @@ class AnnotationsByBookAdapter(
     class HeaderViewHolder(view: View) : RecyclerView.ViewHolder(view) {
         val checkbox: CheckBox = view.findViewById(R.id.group_header_checkbox)
         val title: TextView = view.findViewById(R.id.group_header_title)
+        val deletedChip: TextView = view.findViewById(R.id.group_header_deleted_chip)
         val author: TextView = view.findViewById(R.id.group_header_author)
         val count: TextView = view.findViewById(R.id.group_header_count)
         val toggle: ImageView = view.findViewById(R.id.group_header_toggle)
@@ -98,6 +99,7 @@ class AnnotationsByBookAdapter(
             is Row.Header -> {
                 holder as HeaderViewHolder
                 holder.title.text = row.book.getDisplayTitle()
+                holder.deletedChip.visibility = if (row.book.isDeleted) View.VISIBLE else View.GONE
                 holder.author.text = row.book.getDisplayAuthors()
                 holder.count.text = "${row.annotations.size} annotation${if (row.annotations.size != 1) "s" else ""}"
                 holder.toggle.rotation = if (row.isCollapsed) -90f else 0f
