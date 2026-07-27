@@ -26,6 +26,7 @@ A native Android app for extracting and exporting rich annotations from Onyx Boo
 - 📁 **Custom Save Location** - Choose any folder on your device to save exported files
 - ⚙️ **Preferences** - Configure default export format and text templates
 - 🔄 **Real-time Refresh** - Fetch latest data on demand
+- 🗑️ **Deleted Book Detection** - Flags books whose underlying file is gone but whose annotations still linger in Onyx's database, with a filter to show/hide them
 - ⚡ **E-ink Optimized** - Pure black & white theme with zero animations for optimal e-ink display
 - 🎯 **No Duplicates** - Automatically deduplicates edited annotations
 
