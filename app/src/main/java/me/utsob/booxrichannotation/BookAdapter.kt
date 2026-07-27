@@ -16,6 +16,7 @@ class BookAdapter(
 
     class BookViewHolder(view: View) : RecyclerView.ViewHolder(view) {
         val titleTextView: TextView = view.findViewById(R.id.book_title)
+        val deletedChip: TextView = view.findViewById(R.id.book_deleted_chip)
         val authorTextView: TextView = view.findViewById(R.id.book_author)
         val annotationCountTextView: TextView = view.findViewById(R.id.annotation_count)
         val menuButton: ImageButton = view.findViewById(R.id.btn_menu)
@@ -35,6 +36,7 @@ class BookAdapter(
         val annotations = bookWithAnnotations.annotations
 
         holder.titleTextView.text = book.getDisplayTitle()
+        holder.deletedChip.visibility = if (book.isDeleted) View.VISIBLE else View.GONE
         holder.authorTextView.text = book.getDisplayAuthors()
 
         // Show annotation count

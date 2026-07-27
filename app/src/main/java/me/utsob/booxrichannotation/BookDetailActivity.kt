@@ -59,6 +59,7 @@ class BookDetailActivity : AppCompatActivity() {
         supportActionBar?.title = book.getDisplayTitle()
 
         val titleView = findViewById<TextView>(R.id.book_detail_title)
+        val deletedChipView = findViewById<TextView>(R.id.book_detail_deleted_chip)
         val authorView = findViewById<TextView>(R.id.book_detail_author)
         val countView = findViewById<TextView>(R.id.book_detail_count)
         val selectionToolbar = findViewById<View>(R.id.selection_toolbar)
@@ -71,6 +72,7 @@ class BookDetailActivity : AppCompatActivity() {
         val emptyText = findViewById<TextView>(R.id.annotations_empty_text)
 
         titleView.text = book.getDisplayTitle()
+        deletedChipView.visibility = if (book.isDeleted) View.VISIBLE else View.GONE
         authorView.text = book.getDisplayAuthors()
         countView.text = "${annotations.size} annotation${if (annotations.size != 1) "s" else ""}"
 

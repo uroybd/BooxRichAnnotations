@@ -61,9 +61,14 @@ class MainActivity : AppCompatActivity() {
     }
     private var currentSortMode = SortMode.LAST_READ
 
+    // Filtering: whether to include books whose underlying file was deleted
+    // (Metadata.status == 1) but which still have annotations lingering in the DB
+    private var includeDeletedBooks = false
+
     companion object {
         private const val PREFS_NAME = "BooxRichAnnotationPrefs"
         private const val KEY_SORT_MODE = "sort_mode"
+        private const val KEY_INCLUDE_DELETED = "include_deleted_books"
     }
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -74,6 +79,7 @@ class MainActivity : AppCompatActivity() {
         currentSortMode = SortMode.valueOf(
             prefs.getString(KEY_SORT_MODE, SortMode.LAST_READ.name) ?: SortMode.LAST_READ.name
         )
+        includeDeletedBooks = prefs.getBoolean(KEY_INCLUDE_DELETED, false)
 
         // Disable animations for e-ink
         window.setWindowAnimations(0)
@@ -238,6 +244,10 @@ class MainActivity : AppCompatActivity() {
                 showSortMenu(item)
                 true
             }
+            R.id.action_filter -> {
+                showFilterMenu(item)
+                true
+            }
             R.id.action_refresh -> {
                 loadBooks()
                 true
@@ -303,6 +313,30 @@ class MainActivity : AppCompatActivity() {
         popup.show()
     }
 
+    private fun showFilterMenu(menuItem: MenuItem) {
+        val popup = android.widget.PopupMenu(this, toolbar.findViewById(R.id.action_filter))
+        popup.menuInflater.inflate(R.menu.menu_filter, popup.menu)
+        popup.menu.findItem(R.id.filter_include_deleted)?.isChecked = includeDeletedBooks
+
+        popup.setOnMenuItemClickListener { item ->
+            if (item.itemId == R.id.filter_include_deleted) {
+                includeDeletedBooks = !includeDeletedBooks
+
+                getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
+                    .edit()
+                    .putBoolean(KEY_INCLUDE_DELETED, includeDeletedBooks)
+                    .apply()
+
+                filterBooks(searchView.query.toString())
+                true
+            } else {
+                false
+            }
+        }
+
+        popup.show()
+    }
+
     private fun setupSearch() {
         // Set hint text color to black for better contrast
         val searchText = searchView.findViewById<android.widget.EditText>(androidx.appcompat.R.id.search_src_text)
@@ -331,14 +365,14 @@ class MainActivity : AppCompatActivity() {
     private fun filterBooks(query: String) {
         val searchQuery = query.trim().lowercase()
 
-        filteredBooksWithAnnotations = if (searchQuery.isEmpty()) {
-            allBooksWithAnnotations
-        } else {
-            allBooksWithAnnotations.filter { bookWithAnnotations ->
+        filteredBooksWithAnnotations = allBooksWithAnnotations.filter { bookWithAnnotations ->
+            val matchesDeletedFilter = includeDeletedBooks || !bookWithAnnotations.book.isDeleted
+            val matchesSearch = searchQuery.isEmpty() || run {
                 val title = bookWithAnnotations.book.getDisplayTitle().lowercase()
                 val author = bookWithAnnotations.book.getDisplayAuthors().lowercase()
                 title.contains(searchQuery) || author.contains(searchQuery)
             }
+            matchesDeletedFilter && matchesSearch
         }
 
         updateRecyclerView()
@@ -421,7 +455,9 @@ class MainActivity : AppCompatActivity() {
                     // Collect all UUIDs for this file and keep the most recent lastAccess time
                     val allUuids = booksWithSameFile.map { it.uuid }
                     val latestAccessTime = booksWithSameFile.mapNotNull { it.lastAccess }.maxOrNull()
-                    firstBook.copy(allUuids = allUuids, lastAccess = latestAccessTime)
+                    // Only treat the merged entry as deleted if every version of this file is marked deleted
+                    val mergedStatus = if (booksWithSameFile.all { it.status == 1 }) 1 else firstBook.status
+                    firstBook.copy(allUuids = allUuids, lastAccess = latestAccessTime, status = mergedStatus)
                 }
 
             // Map annotations to books by idString

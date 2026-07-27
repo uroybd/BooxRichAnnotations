@@ -13,8 +13,14 @@ data class BookMetadata(
     val idString: String? = null,
     val lastAccess: Long? = null,
     val totalPages: Int? = null,
-    val allUuids: List<String> = listOf(uuid) // Track all UUIDs for this file
+    val allUuids: List<String> = listOf(uuid), // Track all UUIDs for this file
+    val status: Int? = null
 ) : java.io.Serializable {
+    // Onyx marks a Metadata row's underlying file as gone (moved/deleted from storage)
+    // with status=1, while the row and any annotations tied to it remain in the DB.
+    val isDeleted: Boolean
+        get() = status == 1
+
     fun getDisplayTitle(): String {
         return when {
             !title.isNullOrBlank() && title != "NULL" -> title
