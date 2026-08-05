@@ -38,6 +38,7 @@ A native Android app for extracting and exporting rich annotations from Onyx Boo
   "title": "Book Title",
   "authors": "Author Name",
   "format": "epub",
+  "path": "/storage/emulated/0/Books/book-title.epub",
   "totalPages": 300,
   "publisher": "Publisher Name",
   "language": "English",
@@ -60,9 +61,9 @@ A native Android app for extracting and exporting rich annotations from Onyx Boo
 
 ### CSV
 Simple spreadsheet format with columns:
-- Book, Author, Page, Quote, Chapter, Style, Color, Note, Created At, Book ID
+- Book, Author, Page, Quote, Chapter, Style, Color, Note, Created At, Path
 
-`Book ID` is a stable per-book identifier (not just the title), useful for joining/filtering rows across multiple exports in a spreadsheet or query tool.
+`Path` is the book's on-device file location, useful as a stable per-book identifier for joining/filtering rows across multiple exports in a spreadsheet or query tool.
 
 ### Text (Customizable)
 Export to Markdown or any text format using Pebble templates. The default template includes:
