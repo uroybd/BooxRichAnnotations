@@ -427,8 +427,11 @@ object AnnotationExporter {
         val rootObject = buildBookJsonObject(book, annotations)
         // Add export timestamp (same format as annotation timestamps - milliseconds)
         rootObject.put("exportedAt", System.currentTimeMillis())
-        return rootObject.toString(2)
+        return normalizeJson(rootObject.toString(2))
     }
+
+    /** org.json escapes every "/" as "\/"; strip that back out since it's noise for paths/URLs and not required by the JSON spec. */
+    private fun normalizeJson(json: String): String = json.replace("\\/", "/")
 
     /** One book's title/authors/metadata + its annotations array, without an exportedAt field. */
     private fun buildBookJsonObject(book: BookMetadata, annotations: List<Annotation>): JSONObject {
@@ -501,6 +504,8 @@ object AnnotationExporter {
             bookObject.put("format", "unknown")
         }
 
+        bookObject.put("path", book.location ?: "")
+
         // Add total pages if available
         book.totalPages?.let {
             bookObject.put("totalPages", it)
@@ -540,7 +545,7 @@ object AnnotationExporter {
         val rootObject = JSONObject()
         rootObject.put("exportedAt", exportedAt)
         rootObject.put("books", booksArray)
-        return rootObject.toString(2)
+        return normalizeJson(rootObject.toString(2))
     }
 
     private fun generateFileName(book: BookMetadata, extension: String = "json"): String {
@@ -592,7 +597,7 @@ object AnnotationExporter {
 
     private fun buildCsvContent(book: BookMetadata, annotations: List<Annotation>): String {
         val csv = StringBuilder()
-        csv.append("Book,Author,Page,Quote,Chapter,Style,Color,Note,Created At,Book ID\n")
+        csv.append("Book,Author,Page,Quote,Chapter,Style,Color,Note,Created At,Path\n")
         val bookTitle = escapeCsvField(book.getDisplayTitle())
         val bookAuthor = escapeCsvField(book.getDisplayAuthors())
         val bookIdField = escapeCsvField(bookId(book))
@@ -604,7 +609,7 @@ object AnnotationExporter {
 
     private fun buildMultiBookCsvContent(selections: List<Pair<BookMetadata, List<Annotation>>>): String {
         val csv = StringBuilder()
-        csv.append("Book,Author,Page,Quote,Chapter,Style,Color,Note,Created At,Book ID\n")
+        csv.append("Book,Author,Page,Quote,Chapter,Style,Color,Note,Created At,Path\n")
         for ((book, annotations) in selections) {
             val bookTitle = escapeCsvField(book.getDisplayTitle())
             val bookAuthor = escapeCsvField(book.getDisplayAuthors())
@@ -932,6 +937,7 @@ object AnnotationExporter {
                 "title" to book.getDisplayTitle(),
                 "authors" to book.getDisplayAuthors(),
                 "format" to format,
+                "path" to book.location,
                 "totalPages" to book.totalPages,
                 "publisher" to book.publisher?.takeIf { it.isNotBlank() && it != "NULL" },
                 "language" to book.language?.takeIf { it.isNotBlank() && it != "NULL" },

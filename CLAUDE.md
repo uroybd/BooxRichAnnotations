@@ -55,7 +55,7 @@ PebbleEngine.Builder()
 ```
 
 Available variables:
-- `book.title`, `book.authors`, `book.format`, `book.totalPages`, `book.exportedAt`
+- `book.title`, `book.authors`, `book.format`, `book.path`, `book.totalPages`, `book.exportedAt`
 - `annotations` (list): `pageNumber`, `quote`, `note`, `chapter`, `style`, `color`, `createdAt`
 
 Whitespace control:

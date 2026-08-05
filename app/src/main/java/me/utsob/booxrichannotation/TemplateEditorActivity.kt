@@ -106,6 +106,7 @@ class TemplateEditorActivity : AppCompatActivity() {
                     "title" to "Sample Book",
                     "authors" to "John Doe",
                     "format" to "epub",
+                    "path" to "/storage/emulated/0/Books/sample-book.epub",
                     "totalPages" to 300,
                     "publisher" to "Sample Publisher",
                     "language" to "English",

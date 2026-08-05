@@ -79,6 +79,7 @@ Available in context:
 - `book.title` - Book title
 - `book.authors` - Book authors
 - `book.format` - File format (epub, pdf, etc.)
+- `book.path` - Book file location/path on device
 - `book.totalPages` - Total page count
 - `book.exportedAt` - Export timestamp (Unix ms)
 - `annotations` - List of annotations with:

@@ -73,7 +73,7 @@ Export to Markdown or any text format using Pebble templates. The default templa
 - Metadata table with export timestamp
 
 **Available template variables:**
-- `book.title`, `book.authors`, `book.format`, `book.totalPages`, `book.publisher`, `book.language`, `book.isbn`, `book.description`, `book.exportedAt`
+- `book.title`, `book.authors`, `book.format`, `book.path`, `book.totalPages`, `book.publisher`, `book.language`, `book.isbn`, `book.description`, `book.exportedAt`
 - `annotations` (list): `pageNumber`, `quote`, `note`, `chapter`, `style`, `color`, `createdAt`
 
 **Available template functions:**
